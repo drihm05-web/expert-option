@@ -22,6 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchRole(session.user.id);
       else setLoading(false);
+    }).catch(err => {
+      console.error("Supabase getSession exception:", err);
+      setLoading(false);
     });
 
     // Listen for changes

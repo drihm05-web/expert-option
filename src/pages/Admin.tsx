@@ -20,6 +20,7 @@ export const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Chat State
@@ -43,20 +44,28 @@ export const Admin = () => {
   }, [role, authLoading]);
 
   const fetchData = async () => {
+    setError(null);
     try {
-      const { data: vData } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+      const { data: vData, error: vError } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+      if (vError) throw vError;
       setVehicles(vData || []);
 
-      const { data: rData } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
+      const { data: rData, error: rError } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
+      if (rError) throw rError;
       setRequests(rData || []);
 
-      const { data: uData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      const { data: uData, error: uError } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      if (uError) throw uError;
       setUsers(uData || []);
 
-      const { data: settingsData } = await supabase.from('settings').select('value').eq('key', 'eft_details').single();
+      const { data: settingsData, error: settingsError } = await supabase.from('settings').select('value').eq('key', 'eft_details').single();
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.warn("Settings fetch error:", settingsError);
+      }
       if (settingsData) setEftDetails(settingsData.value);
-    } catch (error) {
-      console.error("Error fetching admin data:", error);
+    } catch (err: any) {
+      console.error("Error fetching admin data:", err);
+      setError(err.message || "A technical issue occurred while loading the admin panel. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -128,6 +137,27 @@ export const Admin = () => {
 
   if (role !== 'admin') {
     return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Access Denied. Admins only.</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+        <Card className="bg-red-500/10 border-red-500/50 max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-red-500 flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Technical Issue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-white/80 mb-4">{error}</p>
+            <Button onClick={fetchData} className="w-full bg-red-500 text-white hover:bg-red-600">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

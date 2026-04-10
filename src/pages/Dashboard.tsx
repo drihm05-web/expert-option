@@ -25,6 +25,7 @@ export const Dashboard = () => {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [eftDetails, setEftDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(prefilledVehicleId ? 'new' : 'active');
 
   // Modals State
@@ -48,36 +49,43 @@ export const Dashboard = () => {
 
   const fetchData = async () => {
     if (!user) return;
+    setError(null);
     try {
       // Fetch Requests
-      const { data: reqData } = await supabase
+      const { data: reqData, error: reqError } = await supabase
         .from('export_requests')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
+      if (reqError) throw reqError;
       if (reqData) setRequests(reqData);
 
       // Fetch Vehicles
-      const { data: vehData } = await supabase
+      const { data: vehData, error: vehError } = await supabase
         .from('vehicles')
         .select('*')
         .eq('status', 'Available')
         .order('created_at', { ascending: false });
       
+      if (vehError) throw vehError;
       if (vehData) setVehicles(vehData);
 
       // Fetch EFT Settings
-      const { data: settingsData } = await supabase
+      const { data: settingsData, error: settingsError } = await supabase
         .from('settings')
         .select('value')
         .eq('key', 'eft_details')
         .single();
       
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.warn("Settings fetch error:", settingsError);
+      }
       if (settingsData) setEftDetails(settingsData.value);
 
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    } catch (err: any) {
+      console.error("Error fetching data:", err);
+      setError(err.message || "A technical issue occurred while loading your dashboard. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -128,6 +136,27 @@ export const Dashboard = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Please login to view your dashboard</h2>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+        <Card className="bg-red-500/10 border-red-500/50 max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-red-500 flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Technical Issue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-white/80 mb-4">{error}</p>
+            <Button onClick={fetchData} className="w-full bg-red-500 text-white hover:bg-red-600">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

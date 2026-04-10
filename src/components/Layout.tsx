@@ -20,10 +20,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [password, setPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
 
   const handleGoogleLogin = async () => {
     try {
       setAuthError('');
+      setAuthSuccess('');
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -39,6 +41,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
+    setAuthSuccess('');
 
     try {
       if (authMode === 'signup') {
@@ -50,7 +53,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           }
         });
         if (error) throw error;
-        setAuthError('Check your email for the confirmation link!');
+        setAuthSuccess('Success! Please check your email for the confirmation link.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -204,6 +207,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {authError && (
                 <div className="text-sm text-red-400 text-center bg-red-400/10 p-3 rounded-md border border-red-400/20">
                   {authError}
+                </div>
+              )}
+
+              {authSuccess && (
+                <div className="text-sm text-green-400 text-center bg-green-400/10 p-3 rounded-md border border-green-400/20">
+                  {authSuccess}
                 </div>
               )}
 
