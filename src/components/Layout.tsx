@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { auth } from '../lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { supabase } from '../lib/supabase';
 import { Button } from './ui/button';
 import { Car, LogIn, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 
@@ -10,16 +9,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
     } catch (error) {
       console.error('Login failed', error);
     }
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     navigate('/');
   };
 

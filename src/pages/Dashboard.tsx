@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -39,12 +38,14 @@ export const Dashboard = () => {
   const fetchRequests = async () => {
     if (!user) return;
     try {
-      const q = query(collection(db, 'export_requests'), where('userId', '==', user.uid));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort in memory since we don't have a composite index yet
-      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setRequests(data);
+      const { data, error } = await supabase
+        .from('export_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setRequests(data || []);
     } catch (error) {
       console.error("Error fetching requests:", error);
     } finally {
@@ -57,15 +58,17 @@ export const Dashboard = () => {
     if (!user) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'export_requests'), {
-        userId: user.uid,
-        vehicleId: vehicleId || null,
+      const { error } = await supabase.from('export_requests').insert([{
+        user_id: user.id,
+        vehicle_id: vehicleId || null,
         destination,
         budget: Number(budget),
         preferences,
-        status: 'Pending',
-        createdAt: new Date().toISOString()
-      });
+        status: 'Pending'
+      }]);
+      
+      if (error) throw error;
+      
       setDestination('');
       setBudget('');
       setPreferences('');

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardFooter } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -19,10 +18,13 @@ export const Marketplace = () => {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const q = query(collection(db, 'vehicles'), where('status', '==', 'Available'));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setVehicles(data);
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('status', 'Available');
+        
+        if (error) throw error;
+        setVehicles(data || []);
       } catch (error) {
         console.error("Error fetching vehicles:", error);
       } finally {

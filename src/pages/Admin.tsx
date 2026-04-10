@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { db } from '../lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -36,11 +35,11 @@ export const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const vSnap = await getDocs(collection(db, 'vehicles'));
-      setVehicles(vSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const { data: vData } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+      setVehicles(vData || []);
 
-      const rSnap = await getDocs(collection(db, 'export_requests'));
-      setRequests(rSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const { data: rData } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
+      setRequests(rData || []);
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
@@ -51,15 +50,14 @@ export const Admin = () => {
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'vehicles'), {
+      await supabase.from('vehicles').insert([{
         title: vTitle,
         brand: vBrand,
         price: Number(vPrice),
         condition: vCondition,
         status: vStatus,
-        images: vImage ? [vImage] : [],
-        createdAt: new Date().toISOString()
-      });
+        images: vImage ? [vImage] : []
+      }]);
       setIsAddVehicleOpen(false);
       fetchData();
       // Reset
@@ -71,14 +69,14 @@ export const Admin = () => {
 
   const handleDeleteVehicle = async (id: string) => {
     if(confirm('Are you sure?')) {
-      await deleteDoc(doc(db, 'vehicles', id));
+      await supabase.from('vehicles').delete().eq('id', id);
       fetchData();
     }
   };
 
   const handleUpdateRequestStatus = async (id: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'export_requests', id), { status: newStatus });
+      await supabase.from('export_requests').update({ status: newStatus }).eq('id', id);
       fetchData();
     } catch (error) {
       console.error("Error updating request:", error);
