@@ -17,7 +17,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) console.error("Supabase getSession error:", error);
       setUser(session?.user ?? null);
       if (session?.user) fetchRole(session.user.id);
       else setLoading(false);
@@ -37,9 +38,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchRole = async (userId: string) => {
-    const { data } = await supabase.from('users').select('role').eq('id', userId).single();
-    if (data) setRole(data.role);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.from('users').select('role').eq('id', userId).single();
+      if (error) {
+        console.error("Supabase fetchRole error (Did you run the SQL script?):", error);
+      }
+      if (data) setRole(data.role);
+    } catch (err) {
+      console.error("Unexpected error fetching role:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

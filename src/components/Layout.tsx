@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Car, LogIn, LogOut, LayoutDashboard, Settings, Mail } from 'lucide-react';
+import { Car, LogIn, LogOut, LayoutDashboard, Settings, Mail, AlertTriangle } from 'lucide-react';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role } = useAuth();
@@ -73,6 +73,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#D4AF37] selection:text-black">
+      {!isSupabaseConfigured && (
+        <div className="bg-red-500 text-white p-4 text-center font-bold flex items-center justify-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          WARNING: Supabase is not connected! You must add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the AI Studio Secrets panel.
+        </div>
+      )}
       <nav className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">

@@ -1,10 +1,12 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
+export const isSupabaseConfigured = supabaseUrl !== '' && supabaseAnonKey !== '';
+
+if (!isSupabaseConfigured) {
   console.warn('⚠️ Missing Supabase environment variables! The app will not be able to connect to the database.');
 }
 
