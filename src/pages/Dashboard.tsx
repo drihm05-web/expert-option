@@ -8,7 +8,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { Package, MessageSquare, Plus, Clock, CheckCircle2, Truck, Ship, MapPin } from 'lucide-react';
+import { Package, MessageSquare, Plus, Clock, CheckCircle2, Truck, Ship, MapPin, History, User as UserIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 const STATUS_STEPS = ['Pending', 'Sourcing', 'Inspection', 'Cleared', 'Shipped', 'Delivered'];
@@ -96,6 +96,9 @@ export const Dashboard = () => {
     );
   }
 
+  const activeRequests = requests.filter(req => req.status !== 'Delivered');
+  const historyRequests = requests.filter(req => req.status === 'Delivered');
+
   return (
     <div className="min-h-screen bg-[#050505] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,13 +108,15 @@ export const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8">
+          <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8 flex flex-wrap gap-2">
             <TabsTrigger value="active" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Active Exports</TabsTrigger>
             <TabsTrigger value="new" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">New Request</TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">History</TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="active">
-            {requests.length === 0 ? (
+            {activeRequests.length === 0 ? (
               <div className="text-center py-24 border border-white/10 rounded-2xl bg-[#0a0a0a]">
                 <Package className="w-12 h-12 text-white/20 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">No active exports</h3>
@@ -122,7 +127,7 @@ export const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {requests.map((req) => {
+                {activeRequests.map((req) => {
                   const currentStepIndex = STATUS_STEPS.indexOf(req.status);
                   return (
                     <Card key={req.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden">
@@ -133,12 +138,28 @@ export const Dashboard = () => {
                               <MapPin className="w-5 h-5 text-[#D4AF37]" />
                               Export to {req.destination}
                             </CardTitle>
-                            <p className="text-sm text-white/50 mt-1">Requested on {new Date(req.createdAt).toLocaleDateString()}</p>
+                            <p className="text-sm text-white/50 mt-1">Requested on {new Date(req.createdAt || req.created_at).toLocaleDateString()}</p>
                           </div>
                           <Badge className="bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/50 uppercase tracking-wider">{req.status}</Badge>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-6">
+                        {/* More Details */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-sm">
+                          <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
+                            <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Budget</span>
+                            <span className="text-white font-medium">${req.budget?.toLocaleString() || 'N/A'}</span>
+                          </div>
+                          <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
+                            <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Vehicle ID</span>
+                            <span className="text-white font-mono text-xs">{req.vehicle_id ? req.vehicle_id.substring(0,8) : 'Sourcing'}</span>
+                          </div>
+                          <div className="bg-[#050505] p-3 rounded-lg border border-white/5 col-span-2">
+                            <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Preferences</span>
+                            <span className="text-white/80 line-clamp-1">{req.preferences || 'None specified'}</span>
+                          </div>
+                        </div>
+
                         {/* Progress Tracker */}
                         <div className="relative mb-8">
                           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 -translate-y-1/2 z-0" />
@@ -163,10 +184,16 @@ export const Dashboard = () => {
                         </div>
 
                         <div className="flex justify-end">
-                          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Message Agent
-                          </Button>
+                          <a 
+                            href={`https://wa.me/27623105001?text=${encodeURIComponent(`Hi Exertion Exports, I need an update on my export request to ${req.destination} (Requested on ${new Date(req.createdAt || req.created_at).toLocaleDateString()}).`)}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
+                            <Button variant="outline" className="border-white/20 text-white hover:bg-[#25D366] hover:border-[#25D366] hover:text-black transition-colors">
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Message Agent
+                            </Button>
+                          </a>
                         </div>
                       </CardContent>
                     </Card>
@@ -174,6 +201,88 @@ export const Dashboard = () => {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="history">
+            {historyRequests.length === 0 ? (
+              <div className="text-center py-24 border border-white/10 rounded-2xl bg-[#0a0a0a]">
+                <History className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">No completed exports</h3>
+                <p className="text-white/50">Your successfully delivered vehicles will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {historyRequests.map((req) => (
+                  <Card key={req.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden opacity-75 hover:opacity-100 transition-opacity">
+                    <CardHeader className="border-b border-white/5 pb-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <CardTitle className="text-xl text-white flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-[#D4AF37]" />
+                            Export to {req.destination}
+                          </CardTitle>
+                          <p className="text-sm text-white/50 mt-1">Requested on {new Date(req.createdAt || req.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/50 uppercase tracking-wider">Delivered</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
+                          <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Budget</span>
+                          <span className="text-white font-medium">${req.budget?.toLocaleString() || 'N/A'}</span>
+                        </div>
+                        <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
+                          <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Vehicle ID</span>
+                          <span className="text-white font-mono text-xs">{req.vehicle_id ? req.vehicle_id.substring(0,8) : 'Sourcing'}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card className="bg-[#0a0a0a] border-white/10 max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-2xl text-white flex items-center gap-2">
+                  <UserIcon className="w-6 h-6 text-[#D4AF37]" />
+                  Client Profile
+                </CardTitle>
+                <p className="text-white/50 text-sm">Your account details and preferences.</p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-1">
+                  <Label className="text-white/50 uppercase text-xs tracking-wider">Email Address</Label>
+                  <p className="text-white font-medium text-lg">{user.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-white/50 uppercase text-xs tracking-wider">Account ID</Label>
+                  <p className="text-white font-mono text-sm bg-[#050505] p-2 rounded border border-white/10">{user.id}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-white/50 uppercase text-xs tracking-wider">Member Since</Label>
+                  <p className="text-white">{new Date(user.created_at || Date.now()).toLocaleDateString()}</p>
+                </div>
+                
+                <div className="pt-6 border-t border-white/10">
+                  <h4 className="text-[#D4AF37] font-bold uppercase tracking-wider mb-4">Support</h4>
+                  <p className="text-white/70 mb-4">Need help with your account or have general questions?</p>
+                  <a 
+                    href="https://wa.me/27623105001?text=Hi%20Exertion%20Exports,%20I%20need%20some%20help%20with%20my%20account." 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <Button className="bg-[#25D366] text-black hover:bg-[#1da851] font-bold uppercase tracking-wider">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Contact Support via WhatsApp
+                    </Button>
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="new">

@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 // 1. Try to get from environment variables (Vercel)
-const envUrl = import.meta.env.VITE_SUPABASE_URL;
-const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let envUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// If the URL exists but is missing https://, fix it automatically
+if (envUrl && !envUrl.startsWith('http')) {
+  envUrl = `https://${envUrl}`;
+}
 
 // 2. Fallback directly to the exact keys you provided so it NEVER fails on Vercel
 export const supabaseUrl = envUrl || 'https://vxsqcswlifikhezwevki.supabase.co';
