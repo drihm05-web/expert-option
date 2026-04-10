@@ -10,14 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Plus, Trash2, Edit, Shield } from 'lucide-react';
+import { Plus, Trash2, Edit, Shield, MessageSquare, Settings } from 'lucide-react';
+import { ChatModal } from '../components/ChatModal';
 
 export const Admin = () => {
   const { user, role, loading: authLoading } = useAuth();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
   const [loading, setLoading] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Chat State
+  const [chatRequestId, setChatRequestId] = useState<string | null>(null);
 
   // New Vehicle Form State
   const [vTitle, setVTitle] = useState('');
@@ -44,6 +50,9 @@ export const Admin = () => {
 
       const { data: uData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
       setUsers(uData || []);
+
+      const { data: settingsData } = await supabase.from('settings').select('value').eq('key', 'eft_details').single();
+      if (settingsData) setEftDetails(settingsData.value);
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
@@ -96,6 +105,23 @@ export const Admin = () => {
     }
   };
 
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await supabase.from('settings').upsert({
+        key: 'eft_details',
+        value: eftDetails
+      });
+      alert('Settings saved successfully!');
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert('Failed to save settings.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   if (authLoading || loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37]">Loading...</div>;
 
   if (role !== 'admin') {
@@ -111,10 +137,11 @@ export const Admin = () => {
         </div>
 
         <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8">
+          <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8 flex flex-wrap gap-2">
             <TabsTrigger value="requests" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Export Requests</TabsTrigger>
             <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Vehicles</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">User Roles</TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
@@ -131,6 +158,7 @@ export const Admin = () => {
                       <TableHead className="text-white/50">Destination</TableHead>
                       <TableHead className="text-white/50">Budget</TableHead>
                       <TableHead className="text-white/50">Status</TableHead>
+                      <TableHead className="text-white/50 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -151,6 +179,12 @@ export const Admin = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button onClick={() => setChatRequestId(req.id)} size="sm" variant="outline" className="border-white/20 text-white hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37]">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Chat
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -293,8 +327,70 @@ export const Admin = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="settings">
+            <Card className="bg-[#0a0a0a] border-white/10 max-w-2xl">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-[#D4AF37]" />
+                  Payment Settings (EFT)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-white">Bank Name</Label>
+                    <Input 
+                      required 
+                      value={eftDetails.bank} 
+                      onChange={e => setEftDetails({...eftDetails, bank: e.target.value})} 
+                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">Account Name</Label>
+                    <Input 
+                      required 
+                      value={eftDetails.accountName} 
+                      onChange={e => setEftDetails({...eftDetails, accountName: e.target.value})} 
+                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">Account Number</Label>
+                    <Input 
+                      required 
+                      value={eftDetails.accountNumber} 
+                      onChange={e => setEftDetails({...eftDetails, accountNumber: e.target.value})} 
+                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">Branch Code</Label>
+                    <Input 
+                      required 
+                      value={eftDetails.branchCode} 
+                      onChange={e => setEftDetails({...eftDetails, branchCode: e.target.value})} 
+                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                    />
+                  </div>
+                  <Button type="submit" disabled={savingSettings} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                    {savingSettings ? 'Saving...' : 'Save Settings'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
+
+      {/* Admin Live Chat Modal */}
+      <ChatModal 
+        isOpen={!!chatRequestId} 
+        onClose={() => setChatRequestId(null)} 
+        requestId={chatRequestId || ''} 
+        currentUserId={user?.id || ''} 
+      />
     </div>
   );
 };

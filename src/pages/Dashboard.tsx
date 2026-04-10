@@ -8,19 +8,28 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { Package, MessageSquare, Plus, Clock, CheckCircle2, Truck, Ship, MapPin, History, User as UserIcon } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Package, MessageSquare, Plus, Clock, CheckCircle2, Truck, Ship, MapPin, History, User as UserIcon, CreditCard, Car, BarChart3 } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { ChatModal } from '../components/ChatModal';
 
 const STATUS_STEPS = ['Pending', 'Sourcing', 'Inspection', 'Cleared', 'Shipped', 'Delivered'];
 
 export const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const prefilledVehicleId = searchParams.get('vehicle');
   
   const [requests, setRequests] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [eftDetails, setEftDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(prefilledVehicleId ? 'new' : 'active');
+
+  // Modals State
+  const [chatRequestId, setChatRequestId] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   // New Request Form State
   const [destination, setDestination] = useState('');
@@ -31,23 +40,42 @@ export const Dashboard = () => {
 
   useEffect(() => {
     if (user) {
-      fetchRequests();
+      fetchData();
     }
   }, [user]);
 
-  const fetchRequests = async () => {
+  const fetchData = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      // Fetch Requests
+      const { data: reqData } = await supabase
         .from('export_requests')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setRequests(data || []);
+      
+      if (reqData) setRequests(reqData);
+
+      // Fetch Vehicles
+      const { data: vehData } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('status', 'Available')
+        .order('created_at', { ascending: false });
+      
+      if (vehData) setVehicles(vehData);
+
+      // Fetch EFT Settings
+      const { data: settingsData } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'eft_details')
+        .single();
+      
+      if (settingsData) setEftDetails(settingsData.value);
+
     } catch (error) {
-      console.error("Error fetching requests:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -74,12 +102,18 @@ export const Dashboard = () => {
       setPreferences('');
       setVehicleId('');
       setActiveTab('active');
-      fetchRequests();
+      fetchData();
     } catch (error) {
       console.error("Error submitting request:", error);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleRequestVehicle = (id: string) => {
+    setVehicleId(id);
+    setActiveTab('new');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (authLoading || loading) {
@@ -98,19 +132,58 @@ export const Dashboard = () => {
 
   const activeRequests = requests.filter(req => req.status !== 'Delivered');
   const historyRequests = requests.filter(req => req.status === 'Delivered');
+  const totalBudget = requests.reduce((sum, req) => sum + (req.budget || 0), 0);
 
   return (
     <div className="min-h-screen bg-[#050505] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-12">
+        <div className="mb-8">
           <h1 className="text-4xl font-bold tracking-tighter uppercase mb-2">Client <span className="text-[#D4AF37] italic font-serif">Dashboard</span></h1>
-          <p className="text-white/50">Manage your export requests and track progress.</p>
+          <p className="text-white/50">Manage your export requests, track progress, and view available vehicles.</p>
+        </div>
+
+        {/* Statistics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="bg-[#0a0a0a] border-white/10">
+            <CardContent className="p-6 flex items-center gap-4">
+              <div className="p-3 bg-[#D4AF37]/10 rounded-lg">
+                <Package className="w-6 h-6 text-[#D4AF37]" />
+              </div>
+              <div>
+                <p className="text-sm text-white/50 uppercase tracking-wider">Active Exports</p>
+                <p className="text-2xl font-bold text-white">{activeRequests.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#0a0a0a] border-white/10">
+            <CardContent className="p-6 flex items-center gap-4">
+              <div className="p-3 bg-green-500/10 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-white/50 uppercase tracking-wider">Delivered</p>
+                <p className="text-2xl font-bold text-white">{historyRequests.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#0a0a0a] border-white/10">
+            <CardContent className="p-6 flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-white/50 uppercase tracking-wider">Total Value</p>
+                <p className="text-2xl font-bold text-white">${totalBudget.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8 flex flex-wrap gap-2">
             <TabsTrigger value="active" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Active Exports</TabsTrigger>
             <TabsTrigger value="new" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">New Request</TabsTrigger>
+            <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Available Vehicles</TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">History</TabsTrigger>
             <TabsTrigger value="profile" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Profile</TabsTrigger>
           </TabsList>
@@ -183,17 +256,15 @@ export const Dashboard = () => {
                           </div>
                         </div>
 
-                        <div className="flex justify-end">
-                          <a 
-                            href={`https://wa.me/27623105001?text=${encodeURIComponent(`Hi Exertion Exports, I need an update on my export request to ${req.destination} (Requested on ${new Date(req.createdAt || req.created_at).toLocaleDateString()}).`)}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                          >
-                            <Button variant="outline" className="border-white/20 text-white hover:bg-[#25D366] hover:border-[#25D366] hover:text-black transition-colors">
-                              <MessageSquare className="w-4 h-4 mr-2" />
-                              Message Agent
-                            </Button>
-                          </a>
+                        <div className="flex flex-wrap justify-end gap-3">
+                          <Button onClick={() => setPaymentModalOpen(true)} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Pay via EFT
+                          </Button>
+                          <Button onClick={() => setChatRequestId(req.id)} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Live Chat
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -201,6 +272,40 @@ export const Dashboard = () => {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="vehicles">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vehicles.map((vehicle) => (
+                <Card key={vehicle.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden group">
+                  <div className="aspect-[4/3] overflow-hidden relative">
+                    <img 
+                      src={vehicle.image_url} 
+                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-4 right-4">
+                      <Badge className="bg-[#D4AF37] text-black font-bold uppercase tracking-wider">
+                        ${vehicle.price.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-bold text-white mb-2">{vehicle.year} {vehicle.make} {vehicle.model}</h3>
+                    <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
+                      <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {vehicle.mileage.toLocaleString()} km</span>
+                    </div>
+                    <Button 
+                      onClick={() => handleRequestVehicle(vehicle.id)}
+                      className="w-full bg-white/5 text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
+                    >
+                      Request Export
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="history">
@@ -344,6 +449,65 @@ export const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Live Chat Modal */}
+      <ChatModal 
+        isOpen={!!chatRequestId} 
+        onClose={() => setChatRequestId(null)} 
+        requestId={chatRequestId || ''} 
+        currentUserId={user.id} 
+      />
+
+      {/* EFT Payment Modal */}
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="bg-[#0a0a0a] border-white/10 text-white sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#D4AF37] flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Direct EFT Details
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-white/70 text-sm">
+              Please use your <strong className="text-white">Request ID</strong> or <strong className="text-white">Name</strong> as the payment reference.
+            </p>
+            
+            {eftDetails ? (
+              <div className="bg-[#050505] p-4 rounded-lg border border-white/10 space-y-3 font-mono text-sm">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/50">Bank:</span>
+                  <span className="text-white">{eftDetails.bank}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/50">Account Name:</span>
+                  <span className="text-white">{eftDetails.accountName}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/50">Account Number:</span>
+                  <span className="text-[#D4AF37] font-bold">{eftDetails.accountNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/50">Branch Code:</span>
+                  <span className="text-white">{eftDetails.branchCode}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-white/50 py-4">
+                Loading payment details...
+              </div>
+            )}
+            
+            <p className="text-xs text-white/40 text-center mt-4">
+              Once payment is made, please upload your proof of payment in the Live Chat or contact support.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setPaymentModalOpen(false)} className="bg-white/10 text-white hover:bg-white/20">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
