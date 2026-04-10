@@ -37,8 +37,10 @@ export const Admin = () => {
   useEffect(() => {
     if (role === 'admin') {
       fetchData();
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [role]);
+  }, [role, authLoading]);
 
   const fetchData = async () => {
     try {

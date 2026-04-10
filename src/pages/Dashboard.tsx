@@ -41,8 +41,10 @@ export const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchData();
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchData = async () => {
     if (!user) return;
