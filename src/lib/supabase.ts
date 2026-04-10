@@ -1,19 +1,14 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// 1. Try to get from environment variables (Vercel)
+const envUrl = import.meta.env.VITE_SUPABASE_URL;
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if the URL is actually a valid HTTP/HTTPS URL
-const isValidUrl = supabaseUrl.startsWith('http://') || supabaseUrl.startsWith('https://');
-export const isSupabaseConfigured = isValidUrl && supabaseAnonKey !== '';
+// 2. Fallback directly to the exact keys you provided so it NEVER fails on Vercel
+export const supabaseUrl = envUrl || 'https://vxsqcswlifikhezwevki.supabase.co';
+export const supabaseAnonKey = envKey || 'sb_publishable_0bKAIw17bpGhL6oyhSGPEw_zjeFcXio';
 
-if (!isSupabaseConfigured) {
-  console.warn('⚠️ Missing or invalid Supabase environment variables! The app will not be able to connect to the database.');
-}
+export const isSupabaseConfigured = true;
 
-// Fallback to placeholders to prevent the app from crashing with a white screen
-const finalUrl = isValidUrl ? supabaseUrl : 'https://placeholder.supabase.co';
-const finalKey = supabaseAnonKey ? supabaseAnonKey : 'placeholder';
-
-export const supabase = createClient(finalUrl, finalKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
