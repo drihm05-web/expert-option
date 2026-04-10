@@ -10,12 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Shield } from 'lucide-react';
 
 export const Admin = () => {
   const { user, role, loading: authLoading } = useAuth();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New Vehicle Form State
@@ -40,6 +41,9 @@ export const Admin = () => {
 
       const { data: rData } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
       setRequests(rData || []);
+
+      const { data: uData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      setUsers(uData || []);
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
@@ -83,6 +87,15 @@ export const Admin = () => {
     }
   };
 
+  const handleUpdateUserRole = async (id: string, newRole: string) => {
+    try {
+      await supabase.from('users').update({ role: newRole }).eq('id', id);
+      fetchData();
+    } catch (error) {
+      console.error("Error updating user role:", error);
+    }
+  };
+
   if (authLoading || loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37]">Loading...</div>;
 
   if (role !== 'admin') {
@@ -94,13 +107,14 @@ export const Admin = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
           <h1 className="text-4xl font-bold tracking-tighter uppercase mb-2">Admin <span className="text-[#D4AF37] italic font-serif">Control</span></h1>
-          <p className="text-white/50">Manage platform data and operations.</p>
+          <p className="text-white/50">Manage platform data, operations, and users.</p>
         </div>
 
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8">
             <TabsTrigger value="requests" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Export Requests</TabsTrigger>
             <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Vehicles</TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">User Roles</TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
@@ -122,8 +136,8 @@ export const Admin = () => {
                   <TableBody>
                     {requests.map((req) => (
                       <TableRow key={req.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="text-white">{new Date(req.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-white font-mono text-xs">{req.userId.substring(0,8)}...</TableCell>
+                        <TableCell className="text-white">{new Date(req.createdAt || req.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-white font-mono text-xs">{req.user_id?.substring(0,8)}...</TableCell>
                         <TableCell className="text-white">{req.destination}</TableCell>
                         <TableCell className="text-white">${req.budget?.toLocaleString() || 'N/A'}</TableCell>
                         <TableCell>
@@ -228,6 +242,49 @@ export const Admin = () => {
                           <Button variant="ghost" size="icon" onClick={() => handleDeleteVehicle(v.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
                             <Trash2 className="w-4 h-4" />
                           </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <Card className="bg-[#0a0a0a] border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#D4AF37]" />
+                  User Role Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-white/50">Name</TableHead>
+                      <TableHead className="text-white/50">Email</TableHead>
+                      <TableHead className="text-white/50">Joined</TableHead>
+                      <TableHead className="text-white/50">Role</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((u) => (
+                      <TableRow key={u.id} className="border-white/10 hover:bg-white/5">
+                        <TableCell className="text-white font-medium">{u.name || 'N/A'}</TableCell>
+                        <TableCell className="text-white">{u.email}</TableCell>
+                        <TableCell className="text-white">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Select defaultValue={u.role} onValueChange={(v) => handleUpdateUserRole(u.id, v)}>
+                            <SelectTrigger className="w-[120px] bg-[#050505] border-white/20 text-white h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="client">Client</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                       </TableRow>
                     ))}
