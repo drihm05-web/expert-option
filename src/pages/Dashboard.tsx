@@ -256,7 +256,7 @@ export const Dashboard = () => {
                           </div>
                           <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
                             <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Vehicle ID</span>
-                            <span className="text-white font-mono text-xs">{req.vehicle_id ? req.vehicle_id.substring(0,8) : 'Sourcing'}</span>
+                            <span className="text-white font-mono text-xs">{req.vehicle_id ? String(req.vehicle_id).substring(0,8) : 'Sourcing'}</span>
                           </div>
                           <div className="bg-[#050505] p-3 rounded-lg border border-white/5 col-span-2">
                             <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Preferences</span>
@@ -318,14 +318,14 @@ export const Dashboard = () => {
                     />
                     <div className="absolute top-4 right-4">
                       <Badge className="bg-[#D4AF37] text-black font-bold uppercase tracking-wider">
-                        ${vehicle.price.toLocaleString()}
+                        ${(vehicle.price || 0).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold text-white mb-2">{vehicle.year} {vehicle.make} {vehicle.model}</h3>
                     <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
-                      <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {vehicle.mileage.toLocaleString()} km</span>
+                      <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {(vehicle.mileage || 0).toLocaleString()} km</span>
                     </div>
                     <Button 
                       onClick={() => handleRequestVehicle(vehicle.id)}
@@ -370,7 +370,7 @@ export const Dashboard = () => {
                         </div>
                         <div className="bg-[#050505] p-3 rounded-lg border border-white/5">
                           <span className="block text-white/40 uppercase text-[10px] tracking-wider mb-1">Vehicle ID</span>
-                          <span className="text-white font-mono text-xs">{req.vehicle_id ? req.vehicle_id.substring(0,8) : 'Sourcing'}</span>
+                          <span className="text-white font-mono text-xs">{req.vehicle_id ? String(req.vehicle_id).substring(0,8) : 'Sourcing'}</span>
                         </div>
                       </div>
                     </CardContent>

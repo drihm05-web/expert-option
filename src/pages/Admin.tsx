@@ -197,7 +197,7 @@ export const Admin = () => {
                     {requests.map((req) => (
                       <TableRow key={req.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white">{new Date(req.createdAt || req.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-white font-mono text-xs">{req.user_id?.substring(0,8)}...</TableCell>
+                        <TableCell className="text-white font-mono text-xs">{req.user_id ? String(req.user_id).substring(0,8) : ''}...</TableCell>
                         <TableCell className="text-white">{req.destination}</TableCell>
                         <TableCell className="text-white">${req.budget?.toLocaleString() || 'N/A'}</TableCell>
                         <TableCell>
@@ -300,7 +300,7 @@ export const Admin = () => {
                       <TableRow key={v.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white font-medium">{v.title}</TableCell>
                         <TableCell className="text-white">{v.brand}</TableCell>
-                        <TableCell className="text-white">${v.price.toLocaleString()}</TableCell>
+                        <TableCell className="text-white">${(v.price || 0).toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="border-[#D4AF37] text-[#D4AF37]">{v.status}</Badge>
                         </TableCell>
