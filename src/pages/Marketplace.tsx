@@ -102,7 +102,7 @@ export const Marketplace = () => {
                 <Card className="bg-[#0a0a0a] border-white/10 overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img 
-                      src={vehicle.images[0] || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1000&auto=format&fit=crop'} 
+                      src={vehicle.images?.[0] || vehicle.image_url || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1000&auto=format&fit=crop'} 
                       alt={vehicle.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy="no-referrer"
@@ -117,7 +117,7 @@ export const Marketplace = () => {
                         <p className="text-sm text-[#D4AF37] font-bold uppercase tracking-wider mb-1">{vehicle.brand}</p>
                         <h3 className="text-xl font-bold text-white leading-tight">{vehicle.title}</h3>
                       </div>
-                      <p className="text-xl font-bold font-serif italic text-white">${vehicle.price.toLocaleString()}</p>
+                      <p className="text-xl font-bold font-serif italic text-white">${(vehicle.price || 0).toLocaleString()}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm text-white/50">
                       <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Year</span> {vehicle.specs?.year || 'N/A'}</div>
