@@ -159,6 +159,13 @@ async function startServer() {
     res.json({ id });
   });
 
+  app.put('/api/vehicles/:id', authenticate, requireAdmin, (req, res) => {
+    const { title, brand, make, model, year, mileage, price, condition, status, images } = req.body;
+    db.prepare('UPDATE vehicles SET title=?, brand=?, make=?, model=?, year=?, mileage=?, price=?, condition=?, status=?, images=? WHERE id=?')
+      .run(title, brand, make, model, year, mileage, price, condition, status, JSON.stringify(images || []), req.params.id);
+    res.json({ success: true });
+  });
+
   app.delete('/api/vehicles/:id', authenticate, requireAdmin, (req, res) => {
     db.prepare('DELETE FROM vehicles WHERE id = ?').run(req.params.id);
     res.json({ success: true });
@@ -202,6 +209,18 @@ async function startServer() {
     res.json({ id });
   });
 
+  app.patch('/api/inquiries/:id', authenticate, requireAdmin, (req, res) => {
+    db.prepare('UPDATE inquiries SET status = ? WHERE id = ?').run(req.body.status, req.params.id);
+    res.json({ success: true });
+  });
+
+  // Admin Summary
+  app.get('/api/admin/summary', authenticate, requireAdmin, (req, res) => {
+    const pendingRequests = db.prepare("SELECT COUNT(*) as count FROM export_requests WHERE status = 'Pending'").get() as any;
+    const newInquiries = db.prepare("SELECT COUNT(*) as count FROM inquiries WHERE status = 'New'").get() as any;
+    res.json({ pendingRequests: pendingRequests.count, newInquiries: newInquiries.count });
+  });
+
   // Users
   app.get('/api/users', authenticate, requireAdmin, (req, res) => {
     const users = db.prepare('SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC').all();
@@ -230,7 +249,13 @@ async function startServer() {
 
   // Messages
   app.get('/api/messages/:requestId', authenticate, (req: any, res) => {
-    const messages = db.prepare('SELECT * FROM messages WHERE request_id = ? ORDER BY created_at ASC').all(req.params.requestId);
+    const messages = db.prepare(`
+      SELECT m.*, u.name as user_name, u.role as user_role 
+      FROM messages m 
+      LEFT JOIN users u ON m.user_id = u.id 
+      WHERE m.request_id = ? 
+      ORDER BY m.created_at ASC
+    `).all(req.params.requestId);
     res.json(messages);
   });
 
@@ -240,7 +265,12 @@ async function startServer() {
     db.prepare('INSERT INTO messages (id, request_id, user_id, content) VALUES (?, ?, ?, ?)')
       .run(id, request_id, req.user.id, content);
     
-    const newMessage = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    const newMessage = db.prepare(`
+      SELECT m.*, u.name as user_name, u.role as user_role 
+      FROM messages m 
+      LEFT JOIN users u ON m.user_id = u.id 
+      WHERE m.id = ?
+    `).get(id);
     
     // Broadcast via WS
     wss.clients.forEach((client) => {

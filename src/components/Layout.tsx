@@ -7,6 +7,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
+import { Toaster } from 'sonner';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role, login, logout } = useAuth();
@@ -26,10 +27,30 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Admin Summary State
+  const [adminSummary, setAdminSummary] = useState({ pendingRequests: 0, newInquiries: 0 });
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (user && role === 'admin') {
+      const fetchSummary = async () => {
+        try {
+          const data = await fetchApi('/admin/summary');
+          if (data) setAdminSummary(data);
+        } catch (e) {
+          console.error("Failed to fetch admin summary", e);
+        }
+      };
+      fetchSummary();
+      // Poll every 30 seconds
+      const interval = setInterval(fetchSummary, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user, role]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +88,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#D4AF37] selection:text-black">
+      <Toaster theme="dark" position="top-center" />
       <nav className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
@@ -100,11 +122,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 {user ? (
                   <>
                     {role === 'admin' && (
-                      <Link to="/admin">
+                      <Link to="/admin" className="relative">
                         <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
                           <Settings className="w-4 h-4 mr-2" />
                           Admin
                         </Button>
+                        {(adminSummary.pendingRequests > 0 || adminSummary.newInquiries > 0) && (
+                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                            {adminSummary.pendingRequests + adminSummary.newInquiries}
+                          </span>
+                        )}
                       </Link>
                     )}
                     <Link to="/dashboard">

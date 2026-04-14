@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Plus, Trash2, Edit, Shield, MessageSquare, Settings } from 'lucide-react';
 import { ChatModal } from '../components/ChatModal';
+import { toast } from 'sonner';
 
 export const Admin = () => {
   const { user, role, loading: authLoading } = useAuth();
@@ -39,6 +40,7 @@ export const Admin = () => {
   const [vStatus, setVStatus] = useState('Available');
   const [vImage, setVImage] = useState('');
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (role === 'admin') {
@@ -78,34 +80,76 @@ export const Admin = () => {
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetchApi('/vehicles', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: vTitle,
-          brand: vBrand,
-          make: vMake,
-          model: vModel,
-          year: Number(vYear),
-          mileage: Number(vMileage),
-          price: Number(vPrice),
-          condition: vCondition,
-          status: vStatus,
-          images: vImage ? [vImage] : []
-        })
-      });
+      if (editingVehicleId) {
+        await fetchApi(`/vehicles/${editingVehicleId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            title: vTitle,
+            brand: vBrand,
+            make: vMake,
+            model: vModel,
+            year: Number(vYear),
+            mileage: Number(vMileage),
+            price: Number(vPrice),
+            condition: vCondition,
+            status: vStatus,
+            images: vImage ? [vImage] : []
+          })
+        });
+        toast.success('Vehicle updated successfully');
+      } else {
+        await fetchApi('/vehicles', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: vTitle,
+            brand: vBrand,
+            make: vMake,
+            model: vModel,
+            year: Number(vYear),
+            mileage: Number(vMileage),
+            price: Number(vPrice),
+            condition: vCondition,
+            status: vStatus,
+            images: vImage ? [vImage] : []
+          })
+        });
+        toast.success('Vehicle added successfully');
+      }
       setIsAddVehicleOpen(false);
+      setEditingVehicleId(null);
       fetchData();
       // Reset
       setVTitle(''); setVBrand(''); setVMake(''); setVModel(''); setVYear(''); setVMileage(''); setVPrice(''); setVImage('');
-    } catch (error) {
-      console.error("Error adding vehicle:", error);
+    } catch (error: any) {
+      console.error("Error saving vehicle:", error);
+      toast.error(error.message || 'Failed to save vehicle');
     }
   };
 
+  const openEditVehicle = (v: any) => {
+    setEditingVehicleId(v.id);
+    setVTitle(v.title || '');
+    setVBrand(v.brand || '');
+    setVMake(v.make || '');
+    setVModel(v.model || '');
+    setVYear(v.year?.toString() || '');
+    setVMileage(v.mileage?.toString() || '');
+    setVPrice(v.price?.toString() || '');
+    setVCondition(v.condition || 'Used');
+    setVStatus(v.status || 'Available');
+    setVImage(v.images?.[0] || v.image_url || '');
+    setIsAddVehicleOpen(true);
+  };
+
   const handleDeleteVehicle = async (id: string) => {
-    if(confirm('Are you sure?')) {
-      await fetchApi(`/vehicles/${id}`, { method: 'DELETE' });
-      fetchData();
+    if(confirm('Are you sure you want to delete this vehicle?')) {
+      try {
+        await fetchApi(`/vehicles/${id}`, { method: 'DELETE' });
+        toast.success('Vehicle deleted');
+        fetchData();
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete vehicle');
+      }
     }
   };
 
@@ -115,9 +159,25 @@ export const Admin = () => {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       });
+      toast.success(`Request status updated to ${newStatus}`);
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating request:", error);
+      toast.error(error.message || 'Failed to update request');
+    }
+  };
+
+  const handleUpdateInquiryStatus = async (id: string, newStatus: string) => {
+    try {
+      await fetchApi(`/inquiries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      toast.success(`Inquiry marked as ${newStatus}`);
+      fetchData();
+    } catch (error: any) {
+      console.error("Error updating inquiry:", error);
+      toast.error(error.message || 'Failed to update inquiry');
     }
   };
 
@@ -127,9 +187,11 @@ export const Admin = () => {
         method: 'PATCH',
         body: JSON.stringify({ role: newRole })
       });
+      toast.success(`User role updated to ${newRole}`);
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user role:", error);
+      toast.error(error.message || 'Failed to update user role');
     }
   };
 
@@ -144,10 +206,10 @@ export const Admin = () => {
           value: eftDetails
         })
       });
-      alert('Settings saved successfully!');
-    } catch (error) {
+      toast.success('Settings saved successfully!');
+    } catch (error: any) {
       console.error("Error saving settings:", error);
-      alert('Failed to save settings.');
+      toast.error(error.message || 'Failed to save settings.');
     } finally {
       setSavingSettings(false);
     }
@@ -180,6 +242,9 @@ export const Admin = () => {
     );
   }
 
+  const pendingRequestsCount = requests.filter(r => r.status === 'Pending').length;
+  const newInquiriesCount = inquiries.filter(i => i.status === 'New').length;
+
   return (
     <div className="min-h-screen bg-[#050505] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -190,8 +255,22 @@ export const Admin = () => {
 
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8 flex flex-wrap gap-2">
-            <TabsTrigger value="requests" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Export Requests</TabsTrigger>
-            <TabsTrigger value="inquiries" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Inquiries</TabsTrigger>
+            <TabsTrigger value="requests" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black relative">
+              Export Requests
+              {pendingRequestsCount > 0 && (
+                <span className="ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                  {pendingRequestsCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="inquiries" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black relative">
+              Inquiries
+              {newInquiriesCount > 0 && (
+                <span className="ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                  {newInquiriesCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Vehicles</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">User Roles</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Settings</TabsTrigger>
@@ -261,6 +340,7 @@ export const Admin = () => {
                       <TableHead className="text-white/50">Name</TableHead>
                       <TableHead className="text-white/50">Email</TableHead>
                       <TableHead className="text-white/50">Message</TableHead>
+                      <TableHead className="text-white/50 text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,11 +353,23 @@ export const Admin = () => {
                         <TableCell className="text-white">{inq.name}</TableCell>
                         <TableCell className="text-white">{inq.email}</TableCell>
                         <TableCell className="text-white max-w-xs truncate" title={inq.message}>{inq.message}</TableCell>
+                        <TableCell className="text-right">
+                          <Select defaultValue={inq.status || 'New'} onValueChange={(v) => handleUpdateInquiryStatus(inq.id, v)}>
+                            <SelectTrigger className="w-[120px] bg-[#050505] border-white/20 text-white h-8 text-xs ml-auto">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="New">New</SelectItem>
+                              <SelectItem value="In Progress">In Progress</SelectItem>
+                              <SelectItem value="Resolved">Resolved</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {inquiries.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-white/50 py-8">No inquiries found.</TableCell>
+                        <TableCell colSpan={6} className="text-center text-white/50 py-8">No inquiries found.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -290,13 +382,19 @@ export const Admin = () => {
             <Card className="bg-[#0a0a0a] border-white/10">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-white">Vehicle Inventory</CardTitle>
-                <Dialog open={isAddVehicleOpen} onOpenChange={setIsAddVehicleOpen}>
+                <Dialog open={isAddVehicleOpen} onOpenChange={(open) => {
+                  setIsAddVehicleOpen(open);
+                  if (!open) {
+                    setEditingVehicleId(null);
+                    setVTitle(''); setVBrand(''); setVMake(''); setVModel(''); setVYear(''); setVMileage(''); setVPrice(''); setVImage('');
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]"><Plus className="w-4 h-4 mr-2"/> Add Vehicle</Button>
                   </DialogTrigger>
                   <DialogContent className="bg-[#0a0a0a] border-white/10 text-white">
                     <DialogHeader>
-                      <DialogTitle>Add New Vehicle</DialogTitle>
+                      <DialogTitle>{editingVehicleId ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddVehicle} className="space-y-4 pt-4">
                       <div className="grid grid-cols-2 gap-4">
@@ -355,7 +453,9 @@ export const Admin = () => {
                           </Select>
                         </div>
                       </div>
-                      <Button type="submit" className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F]">Save Vehicle</Button>
+                      <Button type="submit" className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                        {editingVehicleId ? 'Update Vehicle' : 'Save Vehicle'}
+                      </Button>
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -381,6 +481,9 @@ export const Admin = () => {
                           <Badge variant="outline" className="border-[#D4AF37] text-[#D4AF37]">{v.status}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => openEditVehicle(v)} className="text-white/70 hover:text-white hover:bg-white/10 mr-2">
+                            <Edit className="w-4 h-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDeleteVehicle(v.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
                             <Trash2 className="w-4 h-4" />
                           </Button>

@@ -99,8 +99,13 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
           ) : (
             messages.map((msg) => {
               const isMe = msg.user_id === currentUserId;
+              const senderName = msg.user_role === 'admin' ? 'Support' : (msg.user_name || 'Customer');
+              
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <span className={`text-xs mb-1 ${isMe ? 'text-white/50' : 'text-[#D4AF37] font-semibold'}`}>
+                    {isMe ? 'You' : senderName}
+                  </span>
                   <div className={`max-w-[80%] p-3 rounded-lg ${isMe ? 'bg-[#D4AF37] text-black rounded-br-none' : 'bg-white/10 text-white rounded-bl-none'}`}>
                     <p className="text-sm">{msg.content}</p>
                     <span className={`text-[10px] opacity-70 block mt-1 ${isMe ? 'text-black/70' : 'text-white/50'}`}>
