@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Car, LogIn, LogOut, LayoutDashboard, Settings, Mail, AlertTriangle } from 'lucide-react';
+import { Car, LogIn, LogOut, LayoutDashboard, Settings, Mail, AlertTriangle, Menu, X } from 'lucide-react';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role } = useAuth();
@@ -21,6 +21,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
+
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -103,36 +111,91 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Mobile Menu Toggle */}
+              <button 
+                className="md:hidden p-2 text-white/70 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+
+              <div className="hidden md:flex items-center gap-4">
+                {user ? (
+                  <>
+                    {role === 'admin' && (
+                      <Link to="/admin">
+                        <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
+                    <Link to="/dashboard">
+                      <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+                        <LayoutDashboard className="w-4 h-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="outline" size="sm" onClick={handleLogout} className="border-white/20 text-white hover:bg-white/10">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setIsAuthOpen(true)} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-semibold">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Client Login
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#0a0a0a] border-b border-white/10 px-4 py-6 space-y-4">
+            <div className="flex flex-col space-y-4">
+              <Link to="/about" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">About</Link>
+              <Link to="/services" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Services</Link>
+              <Link to="/auctions" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Auctions</Link>
+              <Link to="/journey" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Journey</Link>
+              <Link to="/concierge" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Concierge</Link>
+              <Link to="/vehicles" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Marketplace</Link>
+              <Link to="/contact" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Contact</Link>
+            </div>
+            
+            <div className="pt-4 border-t border-white/10 flex flex-col space-y-4">
               {user ? (
                 <>
                   {role === 'admin' && (
                     <Link to="/admin">
-                      <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+                      <Button variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10">
                         <Settings className="w-4 h-4 mr-2" />
                         Admin
                       </Button>
                     </Link>
                   )}
                   <Link to="/dashboard">
-                    <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+                    <Button variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10">
                       <LayoutDashboard className="w-4 h-4 mr-2" />
                       Dashboard
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={handleLogout} className="border-white/20 text-white hover:bg-white/10">
+                  <Button variant="outline" onClick={handleLogout} className="w-full justify-start border-white/20 text-white hover:bg-white/10">
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsAuthOpen(true)} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-semibold">
+                <Button onClick={() => setIsAuthOpen(true)} className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-semibold">
                   <LogIn className="w-4 h-4 mr-2" />
                   Client Login
                 </Button>
               )}
             </div>
           </div>
-        </div>
+        )}
       </nav>
       
       <main>

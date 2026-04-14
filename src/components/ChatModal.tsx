@@ -68,8 +68,8 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
     try {
       await supabase.from('messages').insert({
         request_id: requestId,
-        sender_id: currentUserId,
-        text: newMessage.trim()
+        user_id: currentUserId,
+        content: newMessage.trim()
       });
       setNewMessage('');
     } catch (err) {
@@ -93,11 +93,11 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
             </div>
           ) : (
             messages.map((msg) => {
-              const isMe = msg.sender_id === currentUserId;
+              const isMe = msg.user_id === currentUserId;
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] p-3 rounded-lg ${isMe ? 'bg-[#D4AF37] text-black rounded-br-none' : 'bg-white/10 text-white rounded-bl-none'}`}>
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-sm">{msg.content}</p>
                     <span className={`text-[10px] opacity-70 block mt-1 ${isMe ? 'text-black/70' : 'text-white/50'}`}>
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>

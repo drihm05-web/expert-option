@@ -120,10 +120,10 @@ export const Marketplace = () => {
                       <p className="text-xl font-bold font-serif italic text-white">${(vehicle.price || 0).toLocaleString()}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm text-white/50">
-                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Year</span> {vehicle.specs?.year || 'N/A'}</div>
-                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Mileage</span> {vehicle.specs?.mileage ? `${vehicle.specs.mileage.toLocaleString()} km` : 'N/A'}</div>
-                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Fuel</span> {vehicle.specs?.fuelType || 'N/A'}</div>
-                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Trans</span> {vehicle.specs?.transmission || 'N/A'}</div>
+                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Year</span> {vehicle.year || 'N/A'}</div>
+                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Mileage</span> {vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : 'N/A'}</div>
+                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Model</span> {vehicle.model || 'N/A'}</div>
+                      <div><span className="block text-white/30 uppercase text-[10px] tracking-wider">Make</span> {vehicle.make || 'N/A'}</div>
                     </div>
                   </CardContent>
                   <CardFooter className="p-6 pt-0">
