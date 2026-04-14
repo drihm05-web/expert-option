@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -30,6 +30,10 @@ export const Admin = () => {
   // New Vehicle Form State
   const [vTitle, setVTitle] = useState('');
   const [vBrand, setVBrand] = useState('');
+  const [vMake, setVMake] = useState('');
+  const [vModel, setVModel] = useState('');
+  const [vYear, setVYear] = useState('');
+  const [vMileage, setVMileage] = useState('');
   const [vPrice, setVPrice] = useState('');
   const [vCondition, setVCondition] = useState('Used');
   const [vStatus, setVStatus] = useState('Available');
@@ -47,27 +51,22 @@ export const Admin = () => {
   const fetchData = async () => {
     setError(null);
     try {
-      const { data: vData, error: vError } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
-      if (vError) throw vError;
+      const vData = await fetchApi('/vehicles');
       setVehicles(vData || []);
 
-      const { data: rData, error: rError } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
-      if (rError) throw rError;
+      const rData = await fetchApi('/requests');
       setRequests(rData || []);
 
-      const { data: iData, error: iError } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-      if (iError && iError.code !== '42P01') throw iError; // Ignore if table doesn't exist yet
+      const iData = await fetchApi('/inquiries');
       setInquiries(iData || []);
 
-      const { data: uData, error: uError } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-      if (uError) throw uError;
+      const uData = await fetchApi('/users');
       setUsers(uData || []);
 
-      const { data: settingsData, error: settingsError } = await supabase.from('settings').select('value').eq('key', 'eft_details').single();
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.warn("Settings fetch error:", settingsError);
+      const settingsData = await fetchApi('/settings');
+      if (settingsData && settingsData.eft_details) {
+        setEftDetails(settingsData.eft_details);
       }
-      if (settingsData) setEftDetails(settingsData.value);
     } catch (err: any) {
       console.error("Error fetching admin data:", err);
       setError(err.message || "A technical issue occurred while loading the admin panel. Please try again later.");
@@ -79,18 +78,25 @@ export const Admin = () => {
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await supabase.from('vehicles').insert([{
-        title: vTitle,
-        brand: vBrand,
-        price: Number(vPrice),
-        condition: vCondition,
-        status: vStatus,
-        images: vImage ? [vImage] : []
-      }]);
+      await fetchApi('/vehicles', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: vTitle,
+          brand: vBrand,
+          make: vMake,
+          model: vModel,
+          year: Number(vYear),
+          mileage: Number(vMileage),
+          price: Number(vPrice),
+          condition: vCondition,
+          status: vStatus,
+          images: vImage ? [vImage] : []
+        })
+      });
       setIsAddVehicleOpen(false);
       fetchData();
       // Reset
-      setVTitle(''); setVBrand(''); setVPrice(''); setVImage('');
+      setVTitle(''); setVBrand(''); setVMake(''); setVModel(''); setVYear(''); setVMileage(''); setVPrice(''); setVImage('');
     } catch (error) {
       console.error("Error adding vehicle:", error);
     }
@@ -98,14 +104,17 @@ export const Admin = () => {
 
   const handleDeleteVehicle = async (id: string) => {
     if(confirm('Are you sure?')) {
-      await supabase.from('vehicles').delete().eq('id', id);
+      await fetchApi(`/vehicles/${id}`, { method: 'DELETE' });
       fetchData();
     }
   };
 
   const handleUpdateRequestStatus = async (id: string, newStatus: string) => {
     try {
-      await supabase.from('export_requests').update({ status: newStatus }).eq('id', id);
+      await fetchApi(`/requests/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
       fetchData();
     } catch (error) {
       console.error("Error updating request:", error);
@@ -114,7 +123,10 @@ export const Admin = () => {
 
   const handleUpdateUserRole = async (id: string, newRole: string) => {
     try {
-      await supabase.from('users').update({ role: newRole }).eq('id', id);
+      await fetchApi(`/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role: newRole })
+      });
       fetchData();
     } catch (error) {
       console.error("Error updating user role:", error);
@@ -125,9 +137,12 @@ export const Admin = () => {
     e.preventDefault();
     setSavingSettings(true);
     try {
-      await supabase.from('settings').upsert({
-        key: 'eft_details',
-        value: eftDetails
+      await fetchApi('/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'eft_details',
+          value: eftDetails
+        })
       });
       alert('Settings saved successfully!');
     } catch (error) {
@@ -292,6 +307,22 @@ export const Admin = () => {
                         <div className="space-y-2">
                           <Label>Brand</Label>
                           <Input required value={vBrand} onChange={e=>setVBrand(e.target.value)} className="bg-[#050505] border-white/20" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Make</Label>
+                          <Input required value={vMake} onChange={e=>setVMake(e.target.value)} className="bg-[#050505] border-white/20" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Model</Label>
+                          <Input required value={vModel} onChange={e=>setVModel(e.target.value)} className="bg-[#050505] border-white/20" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Year</Label>
+                          <Input type="number" required value={vYear} onChange={e=>setVYear(e.target.value)} className="bg-[#050505] border-white/20" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Mileage (km)</Label>
+                          <Input type="number" required value={vMileage} onChange={e=>setVMileage(e.target.value)} className="bg-[#050505] border-white/20" />
                         </div>
                         <div className="space-y-2">
                           <Label>Price (USD)</Label>

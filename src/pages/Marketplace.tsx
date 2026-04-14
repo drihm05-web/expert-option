@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardFooter } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -18,13 +18,8 @@ export const Marketplace = () => {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*')
-          .eq('status', 'Available');
-        
-        if (error) throw error;
-        setVehicles(data || []);
+        const data = await fetchApi('/vehicles');
+        setVehicles(data.filter((v: any) => v.status === 'Available') || []);
       } catch (error) {
         console.error("Error fetching vehicles:", error);
       } finally {

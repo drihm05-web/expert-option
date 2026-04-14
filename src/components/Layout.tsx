@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Car, LogIn, LogOut, LayoutDashboard, Settings, Mail, AlertTriangle, Menu, X } from 'lucide-react';
+import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { user, role } = useAuth();
+  const { user, role, login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,6 +18,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
@@ -30,21 +31,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      setAuthError('');
-      setAuthSuccess('');
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-    } catch (error: any) {
-      setAuthError(error.message || 'Failed to login with Google');
-    }
-  };
-
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -53,21 +39,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
     try {
       if (authMode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin
-          }
+        const data = await fetchApi('/auth/signup', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, name })
         });
-        if (error) throw error;
-        setAuthSuccess('Success! Please check your email for the confirmation link.');
+        login(data.token, data.user);
+        setIsAuthOpen(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password
+        const data = await fetchApi('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
         });
-        if (error) throw error;
+        login(data.token, data.user);
         setIsAuthOpen(false);
       }
     } catch (error: any) {
@@ -77,19 +60,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    logout();
     navigate('/');
   };
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#D4AF37] selection:text-black">
-      {!isSupabaseConfigured && (
-        <div className="bg-red-500 text-white p-4 text-center font-bold flex items-center justify-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          WARNING: Supabase is not connected! You must add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the AI Studio Secrets panel.
-        </div>
-      )}
       <nav className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
@@ -222,30 +199,21 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </DialogHeader>
           
           <div className="grid gap-6">
-            <Button 
-              type="button" 
-              onClick={handleGoogleLogin}
-              className="w-full bg-white text-black hover:bg-gray-200 h-12 font-medium text-base transition-colors"
-            >
-              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase font-medium tracking-wider">
-                <span className="bg-[#0a0a0a] px-3 text-white/40">Or continue with email</span>
-              </div>
-            </div>
-
             <form onSubmit={handleEmailAuth} className="space-y-4">
+              {authMode === 'signup' && (
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-white/70">Full Name</Label>
+                  <Input 
+                    id="name" 
+                    type="text" 
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-[#050505] border-white/10 focus-visible:ring-[#D4AF37] h-11" 
+                    placeholder="John Doe"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white/70">Email</Label>
                 <Input 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -52,36 +52,18 @@ export const Dashboard = () => {
     setError(null);
     try {
       // Fetch Requests
-      const { data: reqData, error: reqError } = await supabase
-        .from('export_requests')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (reqError) throw reqError;
+      const reqData = await fetchApi('/requests');
       if (reqData) setRequests(reqData);
 
       // Fetch Vehicles
-      const { data: vehData, error: vehError } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('status', 'Available')
-        .order('created_at', { ascending: false });
-      
-      if (vehError) throw vehError;
-      if (vehData) setVehicles(vehData);
+      const vehData = await fetchApi('/vehicles');
+      if (vehData) setVehicles(vehData.filter((v: any) => v.status === 'Available'));
 
       // Fetch EFT Settings
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'eft_details')
-        .single();
-      
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.warn("Settings fetch error:", settingsError);
+      const settingsData = await fetchApi('/settings');
+      if (settingsData && settingsData.eft_details) {
+        setEftDetails(settingsData.eft_details);
       }
-      if (settingsData) setEftDetails(settingsData.value);
 
     } catch (err: any) {
       console.error("Error fetching data:", err);
@@ -96,16 +78,15 @@ export const Dashboard = () => {
     if (!user) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('export_requests').insert([{
-        user_id: user.id,
-        vehicle_id: vehicleId || null,
-        destination,
-        budget: Number(budget),
-        preferences,
-        status: 'Pending'
-      }]);
-      
-      if (error) throw error;
+      await fetchApi('/requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          vehicle_id: vehicleId || null,
+          destination,
+          budget: Number(budget),
+          preferences
+        })
+      });
       
       setDestination('');
       setBudget('');
@@ -311,8 +292,8 @@ export const Dashboard = () => {
                 <Card key={vehicle.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden group">
                   <div className="aspect-[4/3] overflow-hidden relative">
                     <img 
-                      src={vehicle.image_url} 
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                      src={vehicle.image_url || vehicle.images?.[0] || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1000&auto=format&fit=crop'} 
+                      alt={vehicle.title || `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim()}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       referrerPolicy="no-referrer"
                     />
@@ -323,7 +304,7 @@ export const Dashboard = () => {
                     </div>
                   </div>
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-2">{vehicle.year} {vehicle.make} {vehicle.model}</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">{vehicle.title || `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Unknown Vehicle'}</h3>
                     <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
                       <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {(vehicle.mileage || 0).toLocaleString()} km</span>
                     </div>
@@ -401,6 +382,39 @@ export const Dashboard = () => {
                 <div className="space-y-1">
                   <Label className="text-white/50 uppercase text-xs tracking-wider">Member Since</Label>
                   <p className="text-white">{new Date(user.created_at || Date.now()).toLocaleDateString()}</p>
+                </div>
+                
+                <div className="pt-6 border-t border-white/10">
+                  <h4 className="text-[#D4AF37] font-bold uppercase tracking-wider mb-4">Notification Preferences</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-medium">Email Notifications</p>
+                        <p className="text-white/50 text-sm">Receive updates about your export requests via email.</p>
+                      </div>
+                      <div className="w-11 h-6 bg-[#D4AF37] rounded-full relative cursor-pointer">
+                        <div className="w-4 h-4 bg-black rounded-full absolute right-1 top-1"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-medium">SMS Alerts</p>
+                        <p className="text-white/50 text-sm">Get text messages for urgent updates and delivery tracking.</p>
+                      </div>
+                      <div className="w-11 h-6 bg-white/20 rounded-full relative cursor-pointer">
+                        <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-medium">Marketing Emails</p>
+                        <p className="text-white/50 text-sm">Receive news, special offers, and new vehicle alerts.</p>
+                      </div>
+                      <div className="w-11 h-6 bg-white/20 rounded-full relative cursor-pointer">
+                        <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="pt-6 border-t border-white/10">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { supabase } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 import { Send } from 'lucide-react';
 
 interface ChatModalProps {
@@ -19,19 +19,27 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let ws: WebSocket;
     if (isOpen && requestId) {
       fetchMessages();
       
-      const channel = supabase
-        .channel(`chat_${requestId}`)
-        .on('postgres', { event: 'INSERT', schema: 'public', table: 'messages', filter: `request_id=eq.${requestId}` }, (payload) => {
-          setMessages(prev => [...prev, payload.new]);
-          scrollToBottom();
-        })
-        .subscribe();
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'NEW_MESSAGE' && data.payload.request_id === requestId) {
+            setMessages(prev => [...prev, data.payload]);
+            scrollToBottom();
+          }
+        } catch (e) {
+          console.error("Error parsing websocket message", e);
+        }
+      };
 
       return () => {
-        supabase.removeChannel(channel);
+        ws.close();
       };
     }
   }, [isOpen, requestId]);
@@ -46,13 +54,8 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('request_id', requestId)
-        .order('created_at', { ascending: true });
-      
-      if (!error && data) {
+      const data = await fetchApi(`/messages/${requestId}`);
+      if (data) {
         setMessages(data);
       }
     } catch (err) {
@@ -66,10 +69,12 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
     
     setLoading(true);
     try {
-      await supabase.from('messages').insert({
-        request_id: requestId,
-        user_id: currentUserId,
-        content: newMessage.trim()
+      await fetchApi('/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          request_id: requestId,
+          content: newMessage.trim()
+        })
       });
       setNewMessage('');
     } catch (err) {

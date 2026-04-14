@@ -1,14 +1,28 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase';
-import { User } from '@supabase/supabase-js';
+import { fetchApi } from './api';
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: 'client' | 'admin';
+}
 
 interface AuthContextType {
   user: User | null;
   role: 'client' | 'admin' | null;
   loading: boolean;
+  login: (token: string, user: User) => void;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, role: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  role: null, 
+  loading: true,
+  login: () => {},
+  logout: () => {}
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -16,46 +30,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) console.error("Supabase getSession error:", error);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchRole(session.user.id);
-      else setLoading(false);
-    }).catch(err => {
-      console.error("Supabase getSession exception:", err);
-      setLoading(false);
-    });
+    const initAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchRole(session.user.id);
-      else {
-        setRole(null);
+      try {
+        const { user } = await fetchApi('/auth/me');
+        setUser(user);
+        setRole(user.role);
+      } catch (err) {
+        console.error("Auth init error:", err);
+        localStorage.removeItem('auth_token');
+      } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
   }, []);
 
-  const fetchRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.from('users').select('role').eq('id', userId).single();
-      if (error) {
-        console.error("Supabase fetchRole error (Did you run the SQL script?):", error);
-      }
-      if (data) setRole(data.role);
-    } catch (err) {
-      console.error("Unexpected error fetching role:", err);
-    } finally {
-      setLoading(false);
-    }
+  const login = (token: string, userData: User) => {
+    localStorage.setItem('auth_token', token);
+    setUser(userData);
+    setRole(userData.role);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    setUser(null);
+    setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

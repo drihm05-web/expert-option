@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { supabase } from '../lib/supabase';
+import { fetchApi } from '../lib/api';
 
 export const Concierge = () => {
   const [formData, setFormData] = useState({ name: '', email: '', dates: '', requirements: '' });
@@ -15,13 +15,15 @@ export const Concierge = () => {
     e.preventDefault();
     setStatus('submitting');
     try {
-      const { error } = await supabase.from('inquiries').insert([{
-        type: 'Concierge',
-        name: formData.name,
-        email: formData.email,
-        message: `Dates: ${formData.dates}\nRequirements: ${formData.requirements}`
-      }]);
-      if (error) throw error;
+      await fetchApi('/inquiries', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'Concierge',
+          name: formData.name,
+          email: formData.email,
+          message: `Dates: ${formData.dates}\nRequirements: ${formData.requirements}`
+        })
+      });
       setStatus('success');
       setFormData({ name: '', email: '', dates: '', requirements: '' });
     } catch (err) {
