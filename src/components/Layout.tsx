@@ -92,10 +92,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="font-bold text-xl tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
             </Link>
             
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/vehicles" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Vehicles</Link>
-              <Link to="/#services" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Services</Link>
-              <Link to="/#about" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">About</Link>
+            <div className="hidden md:flex items-center gap-6">
+              <Link to="/about" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">About</Link>
+              <Link to="/services" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Services</Link>
+              <Link to="/auctions" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Auctions</Link>
+              <Link to="/journey" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Journey</Link>
+              <Link to="/concierge" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Concierge</Link>
+              <Link to="/vehicles" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Marketplace</Link>
+              <Link to="/contact" className="text-sm font-medium text-white/70 hover:text-white transition-colors uppercase tracking-wider">Contact</Link>
             </div>
 
             <div className="flex items-center gap-4">

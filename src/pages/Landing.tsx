@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
-import { ArrowRight, ShieldCheck, Globe, Plane, FileCheck, Search } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Globe, Plane, FileCheck, Search, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Landing = () => {
@@ -23,11 +23,11 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6"
+            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase"
           >
-            FROM DREAMS TO REALITY,<br/>
+            Sourcing from South Africa.<br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#F3C93F] italic font-serif">
-              WORRY-FREE
+              Delivered with Precision.
             </span>
           </motion.h1>
           <motion.p 
@@ -36,7 +36,7 @@ export const Landing = () => {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-10 uppercase tracking-widest"
           >
-            With a team you can trust. Premium vehicle export & logistics from South Africa to the world.
+            Your trusted cross-border sourcing and procurement partner.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -44,82 +44,57 @@ export const Landing = () => {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link to="/vehicles">
+            <Link to="/contact?subject=Quote Request">
               <Button size="lg" className="w-full sm:w-auto bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold tracking-wider uppercase h-14 px-8">
-                Browse Vehicles
-                <ArrowRight className="ml-2 w-5 h-5" />
+                Request a Quote
               </Button>
             </Link>
             <Link to="/dashboard">
               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
-                Start Export Process
+                Start Sourcing
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button size="lg" variant="ghost" className="w-full sm:w-auto text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
+                Speak to Our Team
               </Button>
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* About / Trust Section */}
-      <section id="about" className="py-24 bg-[#0a0a0a]">
+      {/* Trust Indicators */}
+      <section className="py-12 border-b border-white/10 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">Our Legacy</h2>
-              <h3 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">10+ YEARS OF EXCELLENCE IN GLOBAL TRADE.</h3>
-              <p className="text-white/60 text-lg leading-relaxed mb-8">
-                Exertion Exports is South Africa's premier vehicle export company. We specialize in sourcing, inspecting, and shipping high-end vehicles across borders with zero friction. Your peace of mind is our highest priority.
-              </p>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-8 h-8 text-[#D4AF37]" />
-                  <span className="font-semibold uppercase tracking-wider text-sm">Verified Secure</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Globe className="w-8 h-8 text-[#D4AF37]" />
-                  <span className="font-semibold uppercase tracking-wider text-sm">Global Reach</span>
-                </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { label: "Verified Suppliers", value: "100+" },
+              { label: "Successful Exports", value: "500+" },
+              { label: "Countries Served", value: "15+" },
+              { label: "FICA Compliant", value: "100%" }
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className="text-3xl font-bold text-[#D4AF37] mb-2">{stat.value}</div>
+                <div className="text-sm text-white/50 uppercase tracking-wider">{stat.label}</div>
               </div>
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-full overflow-hidden border border-white/10 p-2">
-                <img 
-                  src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1964&auto=format&fit=crop" 
-                  alt="Export Logistics" 
-                  className="w-full h-full object-cover rounded-full"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
+      {/* Overview of Services */}
       <section id="services" className="py-24 bg-[#050505]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">What We Do</h2>
-            <h3 className="text-4xl font-bold">PREMIUM SERVICES</h3>
+            <h3 className="text-4xl font-bold uppercase tracking-tight">Core Services</h3>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Search, title: "Vehicle Sourcing", desc: "We find the exact make and model you desire from our trusted network." },
-              { icon: ShieldCheck, title: "Vehicle Inspection", desc: "Rigorous 150-point checks ensuring top quality before purchase." },
-              { icon: FileCheck, title: "Export Clearance", desc: "We handle all complex paperwork, customs, and police clearances." },
-              { icon: Globe, title: "Transportation", desc: "Secure transport to ports and borders with full insurance." },
-              { icon: Plane, title: "Travel Assistance", desc: "Car hire and accommodation support for visiting clients." }
+              { icon: Search, title: "Vehicle Sourcing", desc: "Passenger, commercial, and fleet vehicles sourced and inspected." },
+              { icon: ShieldCheck, title: "Machinery Sourcing", desc: "Construction, agricultural, and industrial machinery procurement." },
+              { icon: Globe, title: "General Goods", desc: "Bulk supply and retail stock from verified South African wholesalers." }
             ].map((service, i) => (
               <motion.div 
                 key={i}
@@ -131,29 +106,80 @@ export const Landing = () => {
               >
                 <service.icon className="w-10 h-10 text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform" />
                 <h4 className="text-xl font-bold mb-3 uppercase tracking-wide">{service.title}</h4>
-                <p className="text-white/50 leading-relaxed">{service.desc}</p>
+                <p className="text-white/50 leading-relaxed mb-6">{service.desc}</p>
+                <Link to="/services" className="text-[#D4AF37] font-bold uppercase text-sm tracking-wider flex items-center group-hover:text-[#F3C93F]">
+                  Learn More <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Why Choose Us */}
+      <section className="py-24 bg-[#0a0a0a]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">The Exertion Advantage</h2>
+              <h3 className="text-4xl md:text-5xl font-bold mb-6 leading-tight uppercase">Why Choose Us?</h3>
+              <p className="text-white/60 text-lg leading-relaxed mb-8">
+                We eliminate the risks of cross-border procurement. With our on-the-ground expertise, we ensure that every transaction is secure, compliant, and executed with precision.
+              </p>
+              <ul className="space-y-4">
+                {[
+                  "End-to-end logistics management",
+                  "Strict FICA & legal compliance",
+                  "On-ground physical inspections",
+                  "Secure payment routing"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-white/80">
+                    <CheckCircle className="w-5 h-5 text-[#D4AF37]" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="relative"
+            >
+              <div className="aspect-square rounded-3xl overflow-hidden border border-white/10 p-2">
+                <img 
+                  src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1964&auto=format&fit=crop" 
+                  alt="Export Logistics" 
+                  className="w-full h-full object-cover rounded-2xl"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
-      <section className="py-24 bg-[#0a0a0a] border-t border-white/5">
+      <section className="py-24 bg-[#050505] border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">The Process</h2>
-            <h3 className="text-4xl font-bold">HOW IT WORKS</h3>
+            <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">Simplified Flow</h2>
+            <h3 className="text-4xl font-bold uppercase">How It Works</h3>
           </div>
           
-          <div className="grid md:grid-cols-5 gap-4 relative">
+          <div className="grid md:grid-cols-4 gap-4 relative">
             <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-white/10 -translate-y-1/2 z-0" />
             {[
-              { step: "01", title: "Choose Vehicle" },
-              { step: "02", title: "Inspection" },
-              { step: "03", title: "Documentation" },
-              { step: "04", title: "Shipping" },
-              { step: "05", title: "Delivery" }
+              { step: "01", title: "Consultation" },
+              { step: "02", title: "Sourcing & Inspection" },
+              { step: "03", title: "Procurement" },
+              { step: "04", title: "Export & Delivery" }
             ].map((item, i) => (
               <motion.div 
                 key={i}
@@ -169,6 +195,14 @@ export const Landing = () => {
                 <h4 className="font-bold uppercase tracking-wider text-sm">{item.title}</h4>
               </motion.div>
             ))}
+          </div>
+          
+          <div className="text-center mt-16">
+            <Link to="/journey">
+              <Button variant="outline" className="border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-wider">
+                View Detailed Client Journey
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

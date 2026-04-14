@@ -17,6 +17,7 @@ export const Admin = () => {
   const { user, role, loading: authLoading } = useAuth();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,10 @@ export const Admin = () => {
       const { data: rData, error: rError } = await supabase.from('export_requests').select('*').order('created_at', { ascending: false });
       if (rError) throw rError;
       setRequests(rData || []);
+
+      const { data: iData, error: iError } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
+      if (iError && iError.code !== '42P01') throw iError; // Ignore if table doesn't exist yet
+      setInquiries(iData || []);
 
       const { data: uData, error: uError } = await supabase.from('users').select('*').order('created_at', { ascending: false });
       if (uError) throw uError;
@@ -171,6 +176,7 @@ export const Admin = () => {
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="bg-[#0a0a0a] border border-white/10 p-1 mb-8 flex flex-wrap gap-2">
             <TabsTrigger value="requests" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Export Requests</TabsTrigger>
+            <TabsTrigger value="inquiries" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Inquiries</TabsTrigger>
             <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Vehicles</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">User Roles</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Settings</TabsTrigger>
@@ -220,6 +226,45 @@ export const Admin = () => {
                         </TableCell>
                       </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inquiries">
+            <Card className="bg-[#0a0a0a] border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white">General Inquiries & Concierge</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-white/50">Date</TableHead>
+                      <TableHead className="text-white/50">Type</TableHead>
+                      <TableHead className="text-white/50">Name</TableHead>
+                      <TableHead className="text-white/50">Email</TableHead>
+                      <TableHead className="text-white/50">Message</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inquiries.map((inq) => (
+                      <TableRow key={inq.id} className="border-white/10 hover:bg-white/5">
+                        <TableCell className="text-white">{new Date(inq.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-[#D4AF37] text-[#D4AF37]">{inq.type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-white">{inq.name}</TableCell>
+                        <TableCell className="text-white">{inq.email}</TableCell>
+                        <TableCell className="text-white max-w-xs truncate" title={inq.message}>{inq.message}</TableCell>
+                      </TableRow>
+                    ))}
+                    {inquiries.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-white/50 py-8">No inquiries found.</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
