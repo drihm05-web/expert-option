@@ -9,9 +9,11 @@ import {
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
+
+  
+  apiKey: "AIzaSyA_KOBxwroEc6qbSbfIrb-kfTeQm2812Ik",
+    authDomain: "resellers-90507.firebaseapp.com",
+    projectId: "resellers-90507",
 };
 
 const app = initializeApp(firebaseConfig);
