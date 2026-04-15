@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -56,8 +57,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           setUser(userData);
           setRole(userData.role);
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error fetching user data:", error);
+          toast.error(`Database Error: ${error.message || 'Could not load user profile'}`);
           setUser(null);
           setRole(null);
         }
@@ -75,8 +77,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      toast.error(`Login Error: ${error.message || 'Failed to sign in'}`);
       throw error;
     }
   };
@@ -84,8 +87,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Logout error:", error);
+      toast.error(`Logout Error: ${error.message || 'Failed to sign out'}`);
     }
   };
 
