@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { fetchApi } from '../lib/api';
+import { db } from '../lib/firebase';
+import { collection, query, where, onSnapshot, addDoc, getDocs } from 'firebase/firestore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -52,23 +53,38 @@ export const Dashboard = () => {
     setError(null);
     try {
       // Fetch Requests
-      const reqData = await fetchApi('/requests');
-      if (reqData) setRequests(reqData);
+      const qRequests = query(collection(db, 'export_requests'), where('user_id', '==', user.id));
+      const unsubscribeRequests = onSnapshot(qRequests, (snapshot) => {
+        const reqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by createdAt descending
+        reqData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setRequests(reqData);
+      });
 
       // Fetch Vehicles
-      const vehData = await fetchApi('/vehicles');
-      if (vehData) setVehicles(vehData.filter((v: any) => v.status === 'Available'));
+      const qVehicles = query(collection(db, 'vehicles'), where('status', '==', 'Available'));
+      const snapshotVehicles = await getDocs(qVehicles);
+      const vehData = snapshotVehicles.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setVehicles(vehData);
 
       // Fetch EFT Settings
-      const settingsData = await fetchApi('/settings');
-      if (settingsData && settingsData.eft_details) {
-        setEftDetails(settingsData.eft_details);
+      const qSettings = query(collection(db, 'settings'));
+      const snapshotSettings = await getDocs(qSettings);
+      const settingsData: any = {};
+      snapshotSettings.docs.forEach(doc => {
+        settingsData[doc.id] = doc.data().value;
+      });
+      if (settingsData['eft_details']) {
+        setEftDetails(JSON.parse(settingsData['eft_details']));
       }
 
+      setLoading(false);
+      return () => {
+        unsubscribeRequests();
+      };
     } catch (err: any) {
       console.error("Error fetching data:", err);
       setError(err.message || "A technical issue occurred while loading your dashboard. Please try again later.");
-    } finally {
       setLoading(false);
     }
   };
@@ -78,14 +94,14 @@ export const Dashboard = () => {
     if (!user) return;
     setSubmitting(true);
     try {
-      await fetchApi('/requests', {
-        method: 'POST',
-        body: JSON.stringify({
-          vehicle_id: vehicleId || null,
-          destination,
-          budget: Number(budget),
-          preferences
-        })
+      await addDoc(collection(db, 'export_requests'), {
+        user_id: user.id,
+        vehicle_id: vehicleId || null,
+        destination,
+        budget: Number(budget),
+        preferences,
+        status: 'Pending',
+        createdAt: new Date().toISOString()
       });
       
       setDestination('');
@@ -93,7 +109,6 @@ export const Dashboard = () => {
       setPreferences('');
       setVehicleId('');
       setActiveTab('active');
-      fetchData();
     } catch (error) {
       console.error("Error submitting request:", error);
     } finally {

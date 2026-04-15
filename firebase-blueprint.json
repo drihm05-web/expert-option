@@ -20,6 +20,10 @@
       "properties": {
         "title": { "type": "string", "description": "Vehicle title/name" },
         "brand": { "type": "string", "description": "Vehicle brand/make" },
+        "make": { "type": "string" },
+        "model": { "type": "string" },
+        "year": { "type": "number" },
+        "mileage": { "type": "number" },
         "price": { "type": "number", "description": "Price in USD" },
         "images": {
           "type": "array",
@@ -28,15 +32,6 @@
         },
         "condition": { "type": "string", "enum": ["New", "Used", "Refurbished"], "description": "Vehicle condition" },
         "status": { "type": "string", "enum": ["Available", "Reserved", "Sold"], "description": "Availability status" },
-        "specs": {
-          "type": "object",
-          "properties": {
-            "year": { "type": "number" },
-            "mileage": { "type": "number" },
-            "fuelType": { "type": "string" },
-            "transmission": { "type": "string" }
-          }
-        },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "brand", "price", "images", "condition", "status", "createdAt"]
@@ -46,27 +41,52 @@
       "description": "A request to export a vehicle",
       "type": "object",
       "properties": {
-        "userId": { "type": "string", "description": "ID of the user making the request" },
-        "vehicleId": { "type": "string", "description": "ID of the requested vehicle (optional if custom sourcing)" },
+        "user_id": { "type": "string", "description": "ID of the user making the request" },
+        "vehicle_id": { "type": "string", "description": "ID of the requested vehicle (optional if custom sourcing)" },
         "destination": { "type": "string", "description": "Destination country" },
         "budget": { "type": "number", "description": "Estimated budget" },
         "preferences": { "type": "string", "description": "Additional preferences or notes" },
         "status": { "type": "string", "enum": ["Pending", "Sourcing", "Inspection", "Cleared", "Shipped", "Delivered"], "description": "Current status of the request" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "destination", "status", "createdAt"]
+      "required": ["user_id", "destination", "status", "createdAt"]
     },
     "Message": {
       "title": "Message",
       "description": "A message within an export request",
       "type": "object",
       "properties": {
-        "requestId": { "type": "string", "description": "ID of the export request" },
-        "senderId": { "type": "string", "description": "ID of the user sending the message" },
-        "message": { "type": "string", "description": "Message content" },
+        "request_id": { "type": "string", "description": "ID of the export request" },
+        "user_id": { "type": "string", "description": "ID of the user sending the message" },
+        "user_name": { "type": "string" },
+        "user_role": { "type": "string" },
+        "content": { "type": "string", "description": "Message content" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["requestId", "senderId", "message", "createdAt"]
+      "required": ["request_id", "user_id", "content", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "A general inquiry or concierge request",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["New", "In Progress", "Resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "name", "email", "message", "status", "createdAt"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global app settings",
+      "type": "object",
+      "properties": {
+        "value": { "type": "string" }
+      },
+      "required": ["value"]
     }
   },
   "firestore": {
@@ -85,6 +105,14 @@
     "/messages/{messageId}": {
       "schema": { "$ref": "#/entities/Message" },
       "description": "Stores messages related to export requests"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Stores general inquiries"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Stores global settings"
     }
   }
 }

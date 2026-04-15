@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { fetchApi } from '../lib/api';
+import { db } from '../lib/firebase';
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDocs, setDoc } from 'firebase/firestore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -53,26 +54,47 @@ export const Admin = () => {
   const fetchData = async () => {
     setError(null);
     try {
-      const vData = await fetchApi('/vehicles');
-      setVehicles(vData || []);
+      const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snapshot) => {
+        setVehicles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      });
 
-      const rData = await fetchApi('/requests');
-      setRequests(rData || []);
+      const unsubRequests = onSnapshot(collection(db, 'export_requests'), (snapshot) => {
+        const reqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        reqData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setRequests(reqData);
+      });
 
-      const iData = await fetchApi('/inquiries');
-      setInquiries(iData || []);
+      const unsubInquiries = onSnapshot(collection(db, 'inquiries'), (snapshot) => {
+        const inqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        inqData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setInquiries(inqData);
+      });
 
-      const uData = await fetchApi('/users');
-      setUsers(uData || []);
+      const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      });
 
-      const settingsData = await fetchApi('/settings');
-      if (settingsData && settingsData.eft_details) {
-        setEftDetails(settingsData.eft_details);
-      }
+      const unsubSettings = onSnapshot(collection(db, 'settings'), (snapshot) => {
+        const settingsData: any = {};
+        snapshot.docs.forEach(doc => {
+          settingsData[doc.id] = doc.data().value;
+        });
+        if (settingsData['eft_details']) {
+          setEftDetails(JSON.parse(settingsData['eft_details']));
+        }
+      });
+
+      setLoading(false);
+      return () => {
+        unsubVehicles();
+        unsubRequests();
+        unsubInquiries();
+        unsubUsers();
+        unsubSettings();
+      };
     } catch (err: any) {
       console.error("Error fetching admin data:", err);
       setError(err.message || "A technical issue occurred while loading the admin panel. Please try again later.");
-    } finally {
       setLoading(false);
     }
   };
@@ -81,43 +103,37 @@ export const Admin = () => {
     e.preventDefault();
     try {
       if (editingVehicleId) {
-        await fetchApi(`/vehicles/${editingVehicleId}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            title: vTitle,
-            brand: vBrand,
-            make: vMake,
-            model: vModel,
-            year: Number(vYear),
-            mileage: Number(vMileage),
-            price: Number(vPrice),
-            condition: vCondition,
-            status: vStatus,
-            images: vImage ? [vImage] : []
-          })
+        await updateDoc(doc(db, 'vehicles', editingVehicleId), {
+          title: vTitle,
+          brand: vBrand,
+          make: vMake,
+          model: vModel,
+          year: Number(vYear),
+          mileage: Number(vMileage),
+          price: Number(vPrice),
+          condition: vCondition,
+          status: vStatus,
+          images: vImage ? [vImage] : []
         });
         toast.success('Vehicle updated successfully');
       } else {
-        await fetchApi('/vehicles', {
-          method: 'POST',
-          body: JSON.stringify({
-            title: vTitle,
-            brand: vBrand,
-            make: vMake,
-            model: vModel,
-            year: Number(vYear),
-            mileage: Number(vMileage),
-            price: Number(vPrice),
-            condition: vCondition,
-            status: vStatus,
-            images: vImage ? [vImage] : []
-          })
+        await addDoc(collection(db, 'vehicles'), {
+          title: vTitle,
+          brand: vBrand,
+          make: vMake,
+          model: vModel,
+          year: Number(vYear),
+          mileage: Number(vMileage),
+          price: Number(vPrice),
+          condition: vCondition,
+          status: vStatus,
+          images: vImage ? [vImage] : [],
+          createdAt: new Date().toISOString()
         });
         toast.success('Vehicle added successfully');
       }
       setIsAddVehicleOpen(false);
       setEditingVehicleId(null);
-      fetchData();
       // Reset
       setVTitle(''); setVBrand(''); setVMake(''); setVModel(''); setVYear(''); setVMileage(''); setVPrice(''); setVImage('');
     } catch (error: any) {
@@ -144,9 +160,8 @@ export const Admin = () => {
   const handleDeleteVehicle = async (id: string) => {
     if(confirm('Are you sure you want to delete this vehicle?')) {
       try {
-        await fetchApi(`/vehicles/${id}`, { method: 'DELETE' });
+        await deleteDoc(doc(db, 'vehicles', id));
         toast.success('Vehicle deleted');
-        fetchData();
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete vehicle');
       }
@@ -155,12 +170,8 @@ export const Admin = () => {
 
   const handleUpdateRequestStatus = async (id: string, newStatus: string) => {
     try {
-      await fetchApi(`/requests/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
-      });
+      await updateDoc(doc(db, 'export_requests', id), { status: newStatus });
       toast.success(`Request status updated to ${newStatus}`);
-      fetchData();
     } catch (error: any) {
       console.error("Error updating request:", error);
       toast.error(error.message || 'Failed to update request');
@@ -169,12 +180,8 @@ export const Admin = () => {
 
   const handleUpdateInquiryStatus = async (id: string, newStatus: string) => {
     try {
-      await fetchApi(`/inquiries/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
-      });
+      await updateDoc(doc(db, 'inquiries', id), { status: newStatus });
       toast.success(`Inquiry marked as ${newStatus}`);
-      fetchData();
     } catch (error: any) {
       console.error("Error updating inquiry:", error);
       toast.error(error.message || 'Failed to update inquiry');
@@ -183,12 +190,8 @@ export const Admin = () => {
 
   const handleUpdateUserRole = async (id: string, newRole: string) => {
     try {
-      await fetchApi(`/users/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role: newRole })
-      });
+      await updateDoc(doc(db, 'users', id), { role: newRole });
       toast.success(`User role updated to ${newRole}`);
-      fetchData();
     } catch (error: any) {
       console.error("Error updating user role:", error);
       toast.error(error.message || 'Failed to update user role');
@@ -199,12 +202,8 @@ export const Admin = () => {
     e.preventDefault();
     setSavingSettings(true);
     try {
-      await fetchApi('/settings', {
-        method: 'POST',
-        body: JSON.stringify({
-          key: 'eft_details',
-          value: eftDetails
-        })
+      await setDoc(doc(db, 'settings', 'eft_details'), {
+        value: JSON.stringify(eftDetails)
       });
       toast.success('Settings saved successfully!');
     } catch (error: any) {

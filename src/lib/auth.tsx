@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchApi } from './api';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface User {
   id: string;
@@ -12,16 +14,16 @@ interface AuthContextType {
   user: User | null;
   role: 'client' | 'admin' | null;
   loading: boolean;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   role: null, 
   loading: true,
-  login: () => {},
-  logout: () => {}
+  login: async () => {},
+  logout: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -30,38 +32,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        setLoading(false);
-        return;
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          let userData: User;
+          
+          if (userDoc.exists()) {
+            userData = userDoc.data() as User;
+          } else {
+            // Create new user
+            userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              name: firebaseUser.displayName || '',
+              role: 'client'
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), {
+              ...userData,
+              createdAt: new Date().toISOString()
+            });
+          }
+          
+          setUser(userData);
+          setRole(userData.role);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUser(null);
+          setRole(null);
+        }
+      } else {
+        setUser(null);
+        setRole(null);
       }
+      setLoading(false);
+    });
 
-      try {
-        const { user } = await fetchApi('/auth/me');
-        setUser(user);
-        setRole(user.role);
-      } catch (err) {
-        console.error("Auth init error:", err);
-        localStorage.removeItem('auth_token');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
+    return () => unsubscribe();
   }, []);
 
-  const login = (token: string, userData: User) => {
-    localStorage.setItem('auth_token', token);
-    setUser(userData);
-    setRole(userData.role);
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
-    setUser(null);
-    setRole(null);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (

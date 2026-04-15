@@ -4,7 +4,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { fetchApi } from '../lib/api';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 
 export const Contact = () => {
@@ -18,14 +19,13 @@ export const Contact = () => {
     e.preventDefault();
     setStatus('submitting');
     try {
-      await fetchApi('/inquiries', {
-        method: 'POST',
-        body: JSON.stringify({
-          type: 'Contact',
-          name: formData.name,
-          email: formData.email,
-          message: `Subject: ${formData.subject}\n\n${formData.message}`
-        })
+      await addDoc(collection(db, 'inquiries'), {
+        type: 'Contact',
+        name: formData.name,
+        email: formData.email,
+        message: `Subject: ${formData.subject}\n\n${formData.message}`,
+        status: 'New',
+        createdAt: new Date().toISOString()
       });
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });

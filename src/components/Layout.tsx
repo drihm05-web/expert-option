@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { fetchApi } from '../lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
 import { Toaster } from 'sonner';
+import { db } from '../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role, login, logout } = useAuth();
@@ -36,20 +37,22 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [location.pathname]);
 
   useEffect(() => {
+    let unsubRequests: () => void;
+    let unsubInquiries: () => void;
+
     if (user && role === 'admin') {
-      const fetchSummary = async () => {
-        try {
-          const data = await fetchApi('/admin/summary');
-          if (data) setAdminSummary(data);
-        } catch (e) {
-          console.error("Failed to fetch admin summary", e);
-        }
-      };
-      fetchSummary();
-      // Poll every 30 seconds
-      const interval = setInterval(fetchSummary, 30000);
-      return () => clearInterval(interval);
+      unsubRequests = onSnapshot(query(collection(db, 'export_requests'), where('status', '==', 'Pending')), (snapshot) => {
+        setAdminSummary(prev => ({ ...prev, pendingRequests: snapshot.size }));
+      });
+      unsubInquiries = onSnapshot(query(collection(db, 'inquiries'), where('status', '==', 'New')), (snapshot) => {
+        setAdminSummary(prev => ({ ...prev, newInquiries: snapshot.size }));
+      });
     }
+
+    return () => {
+      if (unsubRequests) unsubRequests();
+      if (unsubInquiries) unsubInquiries();
+    };
   }, [user, role]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -59,21 +62,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     setAuthSuccess('');
 
     try {
-      if (authMode === 'signup') {
-        const data = await fetchApi('/auth/signup', {
-          method: 'POST',
-          body: JSON.stringify({ email, password, name })
-        });
-        login(data.token, data.user);
-        setIsAuthOpen(false);
-      } else {
-        const data = await fetchApi('/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({ email, password })
-        });
-        login(data.token, data.user);
-        setIsAuthOpen(false);
-      }
+      await login();
+      setIsAuthOpen(false);
     } catch (error: any) {
       setAuthError(error.message || 'Authentication failed');
     } finally {
@@ -226,83 +216,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </DialogHeader>
           
           <div className="grid gap-6">
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              {authMode === 'signup' && (
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white/70">Full Name</Label>
-                  <Input 
-                    id="name" 
-                    type="text" 
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-[#050505] border-white/10 focus-visible:ring-[#D4AF37] h-11" 
-                    placeholder="John Doe"
-                  />
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white/70">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-[#050505] border-white/10 focus-visible:ring-[#D4AF37] h-11" 
-                  placeholder="name@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-white/70">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-[#050505] border-white/10 focus-visible:ring-[#D4AF37] h-11" 
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {authError && (
-                <div className="text-sm text-red-400 text-center bg-red-400/10 p-3 rounded-md border border-red-400/20">
-                  {authError}
-                </div>
-              )}
-
-              {authSuccess && (
-                <div className="text-sm text-green-400 text-center bg-green-400/10 p-3 rounded-md border border-green-400/20">
-                  {authSuccess}
-                </div>
-              )}
-
+            <div className="space-y-4">
               <Button 
-                type="submit" 
+                onClick={handleEmailAuth}
                 disabled={authLoading}
                 className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold uppercase tracking-wider h-12 mt-2 transition-colors"
               >
-                {authLoading ? 'Please wait...' : (authMode === 'login' ? 'Sign In' : 'Create Account')}
+                {authLoading ? 'Please wait...' : 'Sign in with Google'}
               </Button>
-            </form>
-
-            <div className="text-center text-sm text-white/50 mt-2">
-              {authMode === 'login' ? (
-                <>
-                  Don't have an account?{' '}
-                  <button type="button" onClick={() => setAuthMode('signup')} className="text-[#D4AF37] hover:text-[#F3C93F] font-medium transition-colors">
-                    Sign up
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <button type="button" onClick={() => setAuthMode('login')} className="text-[#D4AF37] hover:text-[#F3C93F] font-medium transition-colors">
-                    Sign in
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </DialogContent>

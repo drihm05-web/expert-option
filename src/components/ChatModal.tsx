@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { fetchApi } from '../lib/api';
+import { db } from '../lib/firebase';
+import { collection, query, where, onSnapshot, addDoc, orderBy } from 'firebase/firestore';
 import { Send } from 'lucide-react';
+import { useAuth } from '../lib/auth';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -13,34 +15,27 @@ interface ChatModalProps {
 }
 
 export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatModalProps) => {
+  const { user, role } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let ws: WebSocket;
     if (isOpen && requestId) {
-      fetchMessages();
+      const q = query(
+        collection(db, 'messages'), 
+        where('request_id', '==', requestId)
+      );
       
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${protocol}//${window.location.host}`);
-      
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'NEW_MESSAGE' && data.payload.request_id === requestId) {
-            setMessages(prev => [...prev, data.payload]);
-            scrollToBottom();
-          }
-        } catch (e) {
-          console.error("Error parsing websocket message", e);
-        }
-      };
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        msgs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        setMessages(msgs);
+        scrollToBottom();
+      });
 
-      return () => {
-        ws.close();
-      };
+      return () => unsubscribe();
     }
   }, [isOpen, requestId]);
 
@@ -52,29 +47,19 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchMessages = async () => {
-    try {
-      const data = await fetchApi(`/messages/${requestId}`);
-      if (data) {
-        setMessages(data);
-      }
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-    }
-  };
-
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !user) return;
     
     setLoading(true);
     try {
-      await fetchApi('/messages', {
-        method: 'POST',
-        body: JSON.stringify({
-          request_id: requestId,
-          content: newMessage.trim()
-        })
+      await addDoc(collection(db, 'messages'), {
+        request_id: requestId,
+        user_id: currentUserId,
+        user_name: user.name || '',
+        user_role: role || 'client',
+        content: newMessage.trim(),
+        createdAt: new Date().toISOString()
       });
       setNewMessage('');
     } catch (err) {
@@ -109,7 +94,7 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
                   <div className={`max-w-[80%] p-3 rounded-lg ${isMe ? 'bg-[#D4AF37] text-black rounded-br-none' : 'bg-white/10 text-white rounded-bl-none'}`}>
                     <p className="text-sm">{msg.content}</p>
                     <span className={`text-[10px] opacity-70 block mt-1 ${isMe ? 'text-black/70' : 'text-white/50'}`}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
