@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from './firebase';
+import { auth } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface User {
@@ -36,30 +35,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          // Fetch user from our MongoDB backend API
+          const response = await fetch(`/api/users/${firebaseUser.uid}`);
           let userData: User;
           
-          if (userDoc.exists()) {
-            userData = userDoc.data() as User;
-          } else {
-            // Create new user
-            userData = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              name: firebaseUser.displayName || '',
-              role: 'client'
-            };
-            await setDoc(doc(db, 'users', firebaseUser.uid), {
-              ...userData,
-              createdAt: new Date().toISOString()
+          if (response.ok) {
+            userData = await response.json();
+          } else if (response.status === 404) {
+            // Create new user via API
+            const newUserReq = await fetch('/api/users', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: firebaseUser.uid,
+                email: firebaseUser.email || '',
+                name: firebaseUser.displayName || '',
+                role: 'client',
+                createdAt: new Date().toISOString()
+              })
             });
+            
+            if (!newUserReq.ok) throw new Error('Failed to create user in database');
+            userData = await newUserReq.json();
+          } else {
+            throw new Error('Database connection failed');
           }
           
           setUser(userData);
           setRole(userData.role);
         } catch (error: any) {
           console.error("Error fetching user data:", error);
-          toast.error(`Database Error: ${error.message || 'Could not load user profile'}`);
+          toast.error(`Database Error: ${error.message || 'Could not load user profile. Check MONGODB_URI.'}`);
           setUser(null);
           setRole(null);
         }
