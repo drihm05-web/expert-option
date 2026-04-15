@@ -1,8 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA_KOBxwroEc6qbSbfIrb-kfTeQm2812Ik",
+  authDomain: "resellers-90507.firebaseapp.com",
+  projectId: "resellers-90507",
+  storageBucket: "resellers-90507.firebasestorage.app",
+  messagingSenderId: "407063416894",
+  appId: "1:407063416894:web:06855b7af6337b8dc3c16f",
+  measurementId: "G-3T6MMDJBRW"
+};
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
