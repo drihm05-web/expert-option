@@ -14,45 +14,50 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-const uri = process.env.MONGODB_URI;
-let db: any = null;
+let cachedDb: any = null;
 
 async function connectDB() {
+  if (cachedDb) return cachedDb;
+  
+  const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error('MONGODB_URI environment variable is missing. Please add it to your secrets.');
-    return;
+    console.error('MONGODB_URI environment variable is missing.');
+    throw new Error('MONGODB_URI missing');
   }
+  
   try {
     const client = new MongoClient(uri);
     await client.connect();
-    db = client.db('exertion');
+    cachedDb = client.db('exertion');
     console.log('Connected to MongoDB');
+    return cachedDb;
   } catch (error) {
     console.error('MongoDB connection error:', error);
+    throw error;
   }
 }
-connectDB();
 
 // --- API ROUTES ---
 
 // Users
 app.get('/api/users/:id', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database not connected' });
   try {
+    const db = await connectDB();
     const user = await db.collection('users').findOne({ id: req.params.id });
     if (user) {
       res.json(user);
     } else {
       res.status(404).json({ message: 'User not found' });
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch user' });
+  } catch (error: any) {
+    console.error('Error in GET /api/users/:id:', error);
+    res.status(500).json({ error: 'Failed to fetch user', details: error.message });
   }
 });
 
 app.post('/api/users', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database not connected' });
   try {
+    const db = await connectDB();
     const { id, email, name, role, createdAt } = req.body;
     const existingUser = await db.collection('users').findOne({ id });
     
@@ -63,19 +68,21 @@ app.post('/api/users', async (req, res) => {
       await db.collection('users').insertOne(newUser);
       res.status(201).json(newUser);
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create user' });
+  } catch (error: any) {
+    console.error('Error in POST /api/users:', error);
+    res.status(500).json({ error: 'Failed to create user', details: error.message });
   }
 });
 
 // Vehicles
 app.get('/api/vehicles', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database not connected' });
   try {
+    const db = await connectDB();
     const vehicles = await db.collection('vehicles').find({}).toArray();
     res.json(vehicles.map((v: any) => ({ ...v, id: v._id.toString() })));
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch vehicles' });
+  } catch (error: any) {
+    console.error('Error in GET /api/vehicles:', error);
+    res.status(500).json({ error: 'Failed to fetch vehicles', details: error.message });
   }
 });
 
