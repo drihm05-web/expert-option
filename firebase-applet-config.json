@@ -1,10 +1,10 @@
 {
-  "projectId": "resellers-90507",
-  "appId": "1:407063416894:web:06855b7af6337b8dc3c16f",
+  "projectId": "gen-lang-client-0359781225",
+  "appId": "1:144288869851:web:7518fd412e795dfebfcbfe",
   "apiKey": "AIzaSyDhwCk3OfSWAX9lbTUwbjKsxYGD99CCkSE",
-  "authDomain": "resellers-90507.firebaseapp.com",
-  "firestoreDatabaseId": "",
-  "storageBucket": "resellers-90507.firebasestorage.app",
-  "messagingSenderId": "407063416894",
-  "measurementId": "G-3T6MMDJBRW"
+  "authDomain": "gen-lang-client-0359781225.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-e0c6e7f8-bb2b-448a-bf9b-b463215f51bf",
+  "storageBucket": "gen-lang-client-0359781225.firebasestorage.app",
+  "messagingSenderId": "144288869851",
+  "measurementId": ""
 }
