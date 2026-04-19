@@ -2,13 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
+import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X, MessageCircle, MapPin, Phone, Mail } from 'lucide-react';
 import { Toaster } from 'sonner';
-import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role, login, logout } = useAuth();
@@ -18,9 +14,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   // Auth Modal State
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
@@ -37,21 +30,36 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    let unsubRequests: () => void;
-    let unsubInquiries: () => void;
+    let interval: any;
 
     if (user && role === 'admin') {
-      unsubRequests = onSnapshot(query(collection(db, 'export_requests'), where('status', '==', 'Pending')), (snapshot) => {
-        setAdminSummary(prev => ({ ...prev, pendingRequests: snapshot.size }));
-      });
-      unsubInquiries = onSnapshot(query(collection(db, 'inquiries'), where('status', '==', 'New')), (snapshot) => {
-        setAdminSummary(prev => ({ ...prev, newInquiries: snapshot.size }));
-      });
+      const fetchAdminSummary = async () => {
+        try {
+          const [reqRes, inqRes] = await Promise.all([
+            fetch('/api/export-requests'),
+            fetch('/api/inquiries')
+          ]);
+          
+          if (reqRes.ok && inqRes.ok) {
+            const requests = await reqRes.json();
+            const inquiries = await inqRes.json();
+            
+            setAdminSummary({
+              pendingRequests: requests.filter((r: any) => r.status === 'Pending').length,
+              newInquiries: inquiries.filter((i: any) => i.status === 'New').length
+            });
+          }
+        } catch (err) {
+          console.error("Failed to fetch admin summary", err);
+        }
+      };
+
+      fetchAdminSummary();
+      interval = setInterval(fetchAdminSummary, 10000); // Poll every 10 seconds
     }
 
     return () => {
-      if (unsubRequests) unsubRequests();
-      if (unsubInquiries) unsubInquiries();
+      if (interval) clearInterval(interval);
     };
   }, [user, role]);
 
@@ -196,13 +204,77 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </main>
 
-      <footer className="border-t border-white/10 bg-black py-12 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            <Car className="w-6 h-6 text-[#D4AF37]" />
-            <span className="font-bold text-lg tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+      {/* Floating WhatsApp Button */}
+      <a 
+        href="https://wa.me/27635473010?text=Hello,%20I%20would%20like%20assistance%20with%20sourcing%20from%20South%20Africa." 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 group"
+      >
+        <MessageCircle className="w-8 h-8" />
+        <span className="absolute -top-10 right-0 bg-black/80 text-white text-xs py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          Chat with us
+        </span>
+      </a>
+
+      <footer className="border-t border-white/10 bg-[#050505] py-16 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
+          
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Car className="w-6 h-6 text-[#D4AF37]" />
+              <span className="font-bold text-lg tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+            </div>
+            <p className="text-white/60 text-sm leading-relaxed">
+              Your premium partner for cross-border sourcing and procurement of vehicles, machinery, and general goods from South Africa.
+            </p>
           </div>
-          <p className="text-white/50 text-sm">© {new Date().getFullYear()} Exertion Exports. All rights reserved.</p>
+
+          <div>
+            <h4 className="font-bold text-white uppercase tracking-wider mb-6">Quick Links</h4>
+            <div className="space-y-3 flex flex-col">
+              <Link to="/services" className="text-white/60 hover:text-[#D4AF37] transition-colors text-sm">Services</Link>
+              <Link to="/auctions" className="text-white/60 hover:text-[#D4AF37] transition-colors text-sm">Auctions</Link>
+              <Link to="/concierge" className="text-white/60 hover:text-[#D4AF37] transition-colors text-sm">Concierge Support</Link>
+              <Link to="/vehicles" className="text-white/60 hover:text-[#D4AF37] transition-colors text-sm">Marketplace</Link>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-white uppercase tracking-wider mb-6">Contact</h4>
+            <div className="space-y-4">
+              <a href="https://wa.me/27635473010" className="flex items-start gap-3 text-white/60 hover:text-[#D4AF37] transition-colors group">
+                <Phone className="w-5 h-5 group-hover:text-[#D4AF37] text-white/40 shrink-0" />
+                <span className="text-sm">+27 63 547 3010</span>
+              </a>
+              <a href="mailto:admin@exertionexports.co.za" className="flex items-start gap-3 text-white/60 hover:text-[#D4AF37] transition-colors group">
+                <Mail className="w-5 h-5 group-hover:text-[#D4AF37] text-white/40 shrink-0" />
+                <span className="text-sm">admin@exertionexports.co.za</span>
+              </a>
+              <a href="https://maps.google.com/maps/place//data=!4m2!3m1!1s0x1e95735aaef55899:0xf14b71546e4e0a01" target="_blank" rel="noreferrer" className="flex items-start gap-3 text-white/60 hover:text-[#D4AF37] transition-colors group">
+                <MapPin className="w-5 h-5 group-hover:text-[#D4AF37] text-white/40 shrink-0" />
+                <span className="text-sm">Johannesburg, South Africa</span>
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-white uppercase tracking-wider mb-6">WhatsApp</h4>
+            <div className="p-4 bg-white rounded-xl inline-block">
+              {/* Fallback QR Code - you can replace with an actual image of the QR later */}
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/27635473010?text=Hello,%20I%20would%20like%20assistance%20with%20sourcing%20from%20South%20Africa." alt="WhatsApp QR Code" className="w-[120px] h-[120px]" referrerPolicy="no-referrer" />
+            </div>
+            <p className="text-xs text-white/50 mt-3">Scan to Chat on WhatsApp</p>
+          </div>
+
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-white/40 text-xs">© {new Date().getFullYear()} Exertion Exports. All rights reserved.</p>
+          <div className="flex gap-4">
+            <Link to="#" className="text-white/40 hover:text-white text-xs">Privacy Policy</Link>
+            <Link to="#" className="text-white/40 hover:text-white text-xs">Terms of Service</Link>
+          </div>
         </div>
       </footer>
 

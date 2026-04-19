@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { db } from '../lib/firebase';
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDocs, setDoc } from 'firebase/firestore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -22,6 +20,7 @@ export const Admin = () => {
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
+  const [heroImage, setHeroImage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -54,44 +53,43 @@ export const Admin = () => {
   const fetchData = async () => {
     setError(null);
     try {
-      const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snapshot) => {
-        setVehicles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      });
+      const [vehRes, reqRes, inqRes, usersRes, setRes] = await Promise.all([
+        fetch('/api/vehicles'),
+        fetch('/api/export-requests'),
+        fetch('/api/inquiries'),
+        fetch('/api/users'),
+        fetch('/api/settings')
+      ]);
 
-      const unsubRequests = onSnapshot(collection(db, 'export_requests'), (snapshot) => {
-        const reqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (vehRes.ok) setVehicles(await vehRes.json());
+      
+      if (reqRes.ok) {
+        const reqData = await reqRes.json();
         reqData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setRequests(reqData);
-      });
+      }
 
-      const unsubInquiries = onSnapshot(collection(db, 'inquiries'), (snapshot) => {
-        const inqData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        inqData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      if (inqRes.ok) {
+        const inqData = await inqRes.json();
+        inqData.sort((a: any, b: any) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime());
         setInquiries(inqData);
-      });
+      }
 
-      const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      });
+      if (usersRes.ok) setUsers(await usersRes.json());
 
-      const unsubSettings = onSnapshot(collection(db, 'settings'), (snapshot) => {
-        const settingsData: any = {};
-        snapshot.docs.forEach(doc => {
-          settingsData[doc.id] = doc.data().value;
-        });
-        if (settingsData['eft_details']) {
-          setEftDetails(JSON.parse(settingsData['eft_details']));
+      if (setRes.ok) {
+        const settingsData = await setRes.json();
+        const eftSetting = settingsData.find((s: any) => s.id === 'eft_details');
+        if (eftSetting && eftSetting.value) {
+          setEftDetails(JSON.parse(eftSetting.value));
         }
-      });
+        const heroSetting = settingsData.find((s: any) => s.id === 'heroImage');
+        if (heroSetting && heroSetting.value) {
+          setHeroImage(heroSetting.value);
+        }
+      }
 
       setLoading(false);
-      return () => {
-        unsubVehicles();
-        unsubRequests();
-        unsubInquiries();
-        unsubUsers();
-        unsubSettings();
-      };
     } catch (err: any) {
       console.error("Error fetching admin data:", err);
       setError(err.message || "A technical issue occurred while loading the admin panel. Please try again later.");
@@ -102,40 +100,40 @@ export const Admin = () => {
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        title: vTitle,
+        brand: vBrand,
+        make: vMake,
+        model: vModel,
+        year: Number(vYear),
+        mileage: Number(vMileage),
+        price: Number(vPrice),
+        condition: vCondition,
+        status: vStatus,
+        images: vImage ? [vImage] : []
+      };
+
       if (editingVehicleId) {
-        await updateDoc(doc(db, 'vehicles', editingVehicleId), {
-          title: vTitle,
-          brand: vBrand,
-          make: vMake,
-          model: vModel,
-          year: Number(vYear),
-          mileage: Number(vMileage),
-          price: Number(vPrice),
-          condition: vCondition,
-          status: vStatus,
-          images: vImage ? [vImage] : []
+        const res = await fetch(`/api/vehicles/${editingVehicleId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
+        if (!res.ok) throw new Error('Failed to update vehicle');
         toast.success('Vehicle updated successfully');
       } else {
-        await addDoc(collection(db, 'vehicles'), {
-          title: vTitle,
-          brand: vBrand,
-          make: vMake,
-          model: vModel,
-          year: Number(vYear),
-          mileage: Number(vMileage),
-          price: Number(vPrice),
-          condition: vCondition,
-          status: vStatus,
-          images: vImage ? [vImage] : [],
-          createdAt: new Date().toISOString()
+        const res = await fetch('/api/vehicles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
+        if (!res.ok) throw new Error('Failed to add vehicle');
         toast.success('Vehicle added successfully');
       }
       setIsAddVehicleOpen(false);
       setEditingVehicleId(null);
-      // Reset
       setVTitle(''); setVBrand(''); setVMake(''); setVModel(''); setVYear(''); setVMileage(''); setVPrice(''); setVImage('');
+      fetchData();
     } catch (error: any) {
       console.error("Error saving vehicle:", error);
       toast.error(error.message || 'Failed to save vehicle');
@@ -160,8 +158,10 @@ export const Admin = () => {
   const handleDeleteVehicle = async (id: string) => {
     if(confirm('Are you sure you want to delete this vehicle?')) {
       try {
-        await deleteDoc(doc(db, 'vehicles', id));
+        const res = await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete vehicle');
         toast.success('Vehicle deleted');
+        fetchData();
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete vehicle');
       }
@@ -170,8 +170,14 @@ export const Admin = () => {
 
   const handleUpdateRequestStatus = async (id: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'export_requests', id), { status: newStatus });
+      const res = await fetch(`/api/export-requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!res.ok) throw new Error('Failed to update request');
       toast.success(`Request status updated to ${newStatus}`);
+      fetchData();
     } catch (error: any) {
       console.error("Error updating request:", error);
       toast.error(error.message || 'Failed to update request');
@@ -180,8 +186,14 @@ export const Admin = () => {
 
   const handleUpdateInquiryStatus = async (id: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'inquiries', id), { status: newStatus });
+      const res = await fetch(`/api/inquiries/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!res.ok) throw new Error('Failed to update inquiry');
       toast.success(`Inquiry marked as ${newStatus}`);
+      fetchData();
     } catch (error: any) {
       console.error("Error updating inquiry:", error);
       toast.error(error.message || 'Failed to update inquiry');
@@ -190,8 +202,14 @@ export const Admin = () => {
 
   const handleUpdateUserRole = async (id: string, newRole: string) => {
     try {
-      await updateDoc(doc(db, 'users', id), { role: newRole });
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (!res.ok) throw new Error('Failed to update user role');
       toast.success(`User role updated to ${newRole}`);
+      fetchData();
     } catch (error: any) {
       console.error("Error updating user role:", error);
       toast.error(error.message || 'Failed to update user role');
@@ -202,15 +220,34 @@ export const Admin = () => {
     e.preventDefault();
     setSavingSettings(true);
     try {
-      await setDoc(doc(db, 'settings', 'eft_details'), {
-        value: JSON.stringify(eftDetails)
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'eft_details', value: JSON.stringify(eftDetails) })
       });
+      if (!res.ok) throw new Error('Failed to save settings');
       toast.success('Settings saved successfully!');
     } catch (error: any) {
       console.error("Error saving settings:", error);
       toast.error(error.message || 'Failed to save settings.');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleSaveHeroImage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'heroImage', value: heroImage })
+      });
+      if (!res.ok) throw new Error('Failed to save hero image');
+      toast.success('Hero image updated successfully!');
+    } catch (error: any) {
+      console.error("Error saving hero image:", error);
+      toast.error(error.message || 'Failed to save hero image.');
     }
   };
 
@@ -539,57 +576,90 @@ export const Admin = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card className="bg-[#0a0a0a] border-white/10 max-w-2xl">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-[#D4AF37]" />
-                  Payment Settings (EFT)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveSettings} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-white">Bank Name</Label>
-                    <Input 
-                      required 
-                      value={eftDetails.bank} 
-                      onChange={e => setEftDetails({...eftDetails, bank: e.target.value})} 
-                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-white">Account Name</Label>
-                    <Input 
-                      required 
-                      value={eftDetails.accountName} 
-                      onChange={e => setEftDetails({...eftDetails, accountName: e.target.value})} 
-                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-white">Account Number</Label>
-                    <Input 
-                      required 
-                      value={eftDetails.accountNumber} 
-                      onChange={e => setEftDetails({...eftDetails, accountNumber: e.target.value})} 
-                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-white">Branch Code</Label>
-                    <Input 
-                      required 
-                      value={eftDetails.branchCode} 
-                      onChange={e => setEftDetails({...eftDetails, branchCode: e.target.value})} 
-                      className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
-                    />
-                  </div>
-                  <Button type="submit" disabled={savingSettings} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
-                    {savingSettings ? 'Saving...' : 'Save Settings'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card className="bg-[#0a0a0a] border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-[#D4AF37]" />
+                    Payment Settings (EFT)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSaveSettings} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-white">Bank Name</Label>
+                      <Input 
+                        required 
+                        value={eftDetails.bank} 
+                        onChange={e => setEftDetails({...eftDetails, bank: e.target.value})} 
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white">Account Name</Label>
+                      <Input 
+                        required 
+                        value={eftDetails.accountName} 
+                        onChange={e => setEftDetails({...eftDetails, accountName: e.target.value})} 
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white">Account Number</Label>
+                      <Input 
+                        required 
+                        value={eftDetails.accountNumber} 
+                        onChange={e => setEftDetails({...eftDetails, accountNumber: e.target.value})} 
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white">Branch Code</Label>
+                      <Input 
+                        required 
+                        value={eftDetails.branchCode} 
+                        onChange={e => setEftDetails({...eftDetails, branchCode: e.target.value})} 
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                    </div>
+                    <Button type="submit" disabled={savingSettings} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                      {savingSettings ? 'Saving...' : 'Save Settings'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#0a0a0a] border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-[#D4AF37]" />
+                    Hero Image
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSaveHeroImage} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-white">Homepage Background Image URL</Label>
+                      <Input 
+                        required 
+                        value={heroImage} 
+                        onChange={e => setHeroImage(e.target.value)} 
+                        placeholder="https://images.unsplash.com/..."
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                    </div>
+                    {heroImage && (
+                      <div className="mt-4 border border-white/10 rounded-xl overflow-hidden aspect-video">
+                        <img src={heroImage} alt="Hero Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <Button type="submit" className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                      Save Hero Image
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,21 +1,42 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
-import { ArrowRight, ShieldCheck, Globe, Plane, FileCheck, Search, CheckCircle } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Globe, Search, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Landing = () => {
+  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=2069&auto=format&fit=crop");
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const settings = await res.json();
+          const heroSetting = settings.find((s: any) => s.id === 'heroImage');
+          if (heroSetting && heroSetting.value) {
+            setHeroImage(heroSetting.value);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=2069&auto=format&fit=crop" 
+            src={heroImage} 
             alt="Luxury Vehicle" 
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover opacity-40 mix-blend-overlay"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -23,7 +44,7 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase"
+            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase drop-shadow-2xl"
           >
             Sourcing from South Africa.<br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#F3C93F] italic font-serif">
@@ -34,7 +55,7 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-10 uppercase tracking-widest"
+            className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 uppercase tracking-widest"
           >
             Your trusted cross-border sourcing and procurement partner.
           </motion.p>
@@ -45,17 +66,17 @@ export const Landing = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link to="/contact?subject=Quote Request">
-              <Button size="lg" className="w-full sm:w-auto bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold tracking-wider uppercase h-14 px-8">
+              <Button size="lg" className="w-full sm:w-auto bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold tracking-wider uppercase h-14 px-8 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all">
                 Request a Quote
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm border-[#D4AF37]/50 text-white hover:bg-[#D4AF37]/10 font-bold tracking-wider uppercase h-14 px-8">
                 Start Sourcing
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="ghost" className="w-full sm:w-auto text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
+              <Button size="lg" variant="ghost" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
                 Speak to Our Team
               </Button>
             </Link>
@@ -102,9 +123,10 @@ export const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-[#0a0a0a] border border-white/5 p-8 rounded-2xl hover:border-[#D4AF37]/50 transition-colors group"
+                className="bg-black/40 backdrop-blur-md border border-white/10 p-8 rounded-2xl hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.1)] transition-all group relative overflow-hidden"
               >
-                <service.icon className="w-10 h-10 text-[#D4AF37] mb-6 group-hover:scale-110 transition-transform" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4AF37] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <service.icon className="w-10 h-10 text-[#D4AF37] mb-6 group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-all" />
                 <h4 className="text-xl font-bold mb-3 uppercase tracking-wide">{service.title}</h4>
                 <p className="text-white/50 leading-relaxed mb-6">{service.desc}</p>
                 <Link to="/services" className="text-[#D4AF37] font-bold uppercase text-sm tracking-wider flex items-center group-hover:text-[#F3C93F]">
@@ -152,11 +174,12 @@ export const Landing = () => {
               transition={{ duration: 0.8 }}
               className="relative"
             >
-              <div className="aspect-square rounded-3xl overflow-hidden border border-white/10 p-2">
+              <div className="aspect-square rounded-3xl overflow-hidden border border-[#D4AF37]/20 p-2 relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#D4AF37]/20 to-transparent opacity-50 rounded-3xl" />
                 <img 
                   src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1964&auto=format&fit=crop" 
                   alt="Export Logistics" 
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="w-full h-full object-cover rounded-2xl mix-blend-luminosity hover:mix-blend-normal transition-all duration-700"
                   referrerPolicy="no-referrer"
                 />
               </div>
@@ -166,15 +189,18 @@ export const Landing = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-[#050505] border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-[#050505] border-t border-white/5 relative overflow-hidden">
+        <div className="absolute left-[10%] top-[20%] w-[300px] h-[300px] bg-[#D4AF37]/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute right-[10%] bottom-[20%] w-[300px] h-[300px] bg-[#D4AF37]/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-sm font-bold text-[#D4AF37] tracking-[0.2em] uppercase mb-4">Simplified Flow</h2>
             <h3 className="text-4xl font-bold uppercase">How It Works</h3>
           </div>
           
           <div className="grid md:grid-cols-4 gap-4 relative">
-            <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-white/10 -translate-y-1/2 z-0" />
+            <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent -translate-y-1/2 z-0" />
             {[
               { step: "01", title: "Consultation" },
               { step: "02", title: "Sourcing & Inspection" },
@@ -187,19 +213,19 @@ export const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative z-10 flex flex-col items-center text-center"
+                className="relative z-10 flex flex-col items-center text-center group"
               >
-                <div className="w-16 h-16 rounded-full bg-[#050505] border-2 border-[#D4AF37] flex items-center justify-center text-xl font-bold font-serif italic text-[#D4AF37] mb-4">
+                <div className="w-16 h-16 rounded-full bg-[#050505] border-2 border-[#D4AF37]/50 group-hover:border-[#D4AF37] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center text-xl font-bold font-serif italic text-[#D4AF37] mb-4 transition-all duration-300">
                   {item.step}
                 </div>
-                <h4 className="font-bold uppercase tracking-wider text-sm">{item.title}</h4>
+                <h4 className="font-bold uppercase tracking-wider text-sm group-hover:text-[#D4AF37] transition-colors">{item.title}</h4>
               </motion.div>
             ))}
           </div>
           
           <div className="text-center mt-16">
             <Link to="/journey">
-              <Button variant="outline" className="border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-wider">
+              <Button variant="outline" className="border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-wider min-h-[56px] px-8">
                 View Detailed Client Journey
               </Button>
             </Link>

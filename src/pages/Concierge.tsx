@@ -5,8 +5,6 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { db } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 
 export const Concierge = () => {
   const [formData, setFormData] = useState({ name: '', email: '', dates: '', requirements: '' });
@@ -16,14 +14,19 @@ export const Concierge = () => {
     e.preventDefault();
     setStatus('submitting');
     try {
-      await addDoc(collection(db, 'inquiries'), {
-        type: 'Concierge',
-        name: formData.name,
-        email: formData.email,
-        message: `Dates: ${formData.dates}\nRequirements: ${formData.requirements}`,
-        status: 'New',
-        createdAt: new Date().toISOString()
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'Concierge',
+          name: formData.name,
+          email: formData.email,
+          message: `Dates: ${formData.dates}\nRequirements: ${formData.requirements}`,
+          status: 'New',
+          createdAt: new Date().toISOString()
+        })
       });
+      if (!res.ok) throw new Error('Failed to submit');
       setStatus('success');
       setFormData({ name: '', email: '', dates: '', requirements: '' });
     } catch (err) {

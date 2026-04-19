@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, orderBy } from 'firebase/firestore';
 import { Send } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
@@ -22,21 +20,25 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let interval: any;
     if (isOpen && requestId) {
-      const q = query(
-        collection(db, 'messages'), 
-        where('request_id', '==', requestId)
-      );
-      
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        msgs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setMessages(msgs);
-        scrollToBottom();
-      });
+      const fetchMessages = async () => {
+        try {
+          const res = await fetch(`/api/messages?requestId=${requestId}`);
+          if (res.ok) {
+            const msgs = await res.json();
+            msgs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            setMessages(msgs);
+          }
+        } catch (err) {
+          console.error("Error fetching messages:", err);
+        }
+      };
 
-      return () => unsubscribe();
+      fetchMessages();
+      interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
     }
+    return () => clearInterval(interval);
   }, [isOpen, requestId]);
 
   useEffect(() => {
@@ -53,15 +55,28 @@ export const ChatModal = ({ isOpen, onClose, requestId, currentUserId }: ChatMod
     
     setLoading(true);
     try {
-      await addDoc(collection(db, 'messages'), {
-        request_id: requestId,
-        user_id: currentUserId,
-        user_name: user.name || '',
-        user_role: role || 'client',
-        content: newMessage.trim(),
-        createdAt: new Date().toISOString()
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: requestId,
+          user_id: currentUserId,
+          user_name: user.name || '',
+          user_role: role || 'client',
+          content: newMessage.trim(),
+          createdAt: new Date().toISOString()
+        })
       });
-      setNewMessage('');
+      if (res.ok) {
+        setNewMessage('');
+        // Fetch immediately after sending
+        const fetchRes = await fetch(`/api/messages?requestId=${requestId}`);
+        if (fetchRes.ok) {
+          const msgs = await fetchRes.json();
+          msgs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          setMessages(msgs);
+        }
+      }
     } catch (err) {
       console.error("Error sending message:", err);
     } finally {

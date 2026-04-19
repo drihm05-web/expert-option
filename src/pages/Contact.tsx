@@ -4,8 +4,6 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { db } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 
 export const Contact = () => {
@@ -19,14 +17,19 @@ export const Contact = () => {
     e.preventDefault();
     setStatus('submitting');
     try {
-      await addDoc(collection(db, 'inquiries'), {
-        type: 'Contact',
-        name: formData.name,
-        email: formData.email,
-        message: `Subject: ${formData.subject}\n\n${formData.message}`,
-        status: 'New',
-        createdAt: new Date().toISOString()
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'Contact',
+          name: formData.name,
+          email: formData.email,
+          message: `Subject: ${formData.subject}\n\n${formData.message}`,
+          status: 'New',
+          createdAt: new Date().toISOString()
+        })
       });
+      if (!res.ok) throw new Error('Failed to submit');
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
@@ -60,7 +63,7 @@ export const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-white/50 uppercase tracking-wider mb-1">Phone / WhatsApp</p>
-                    <a href="https://wa.me/27623105001" className="text-white hover:text-[#D4AF37] transition-colors font-mono text-lg">+27 62 310 5001</a>
+                    <a href="https://wa.me/27635473010" className="text-white hover:text-[#D4AF37] transition-colors font-mono text-lg">+27 63 547 3010</a>
                   </div>
                 </div>
                 
@@ -70,7 +73,7 @@ export const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-white/50 uppercase tracking-wider mb-1">Email</p>
-                    <a href="mailto:info@exertionexports.com" className="text-white hover:text-[#D4AF37] transition-colors">info@exertionexports.com</a>
+                    <a href="mailto:admin@exertionexports.co.za" className="text-white hover:text-[#D4AF37] transition-colors">admin@exertionexports.co.za</a>
                   </div>
                 </div>
                 
@@ -80,9 +83,19 @@ export const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-white/50 uppercase tracking-wider mb-1">Headquarters</p>
-                    <p className="text-white">Johannesburg, South Africa</p>
+                    <a href="https://maps.google.com/maps/place//data=!4m2!3m1!1s0x1e95735aaef55899:0xf14b71546e4e0a01" target="_blank" rel="noreferrer" className="text-white hover:text-[#D4AF37] transition-colors">Johannesburg, South Africa</a>
                   </div>
                 </div>
+              </div>
+            </div>
+            
+            <div className="bg-[#0a0a0a] p-8 rounded-3xl border border-white/10">
+              <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-wider">WhatsApp QR</h3>
+              <div className="flex flex-col items-center">
+                <div className="p-4 bg-white rounded-xl mb-4">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://wa.me/27635473010?text=Hello,%20I%20would%20like%20assistance%20with%20sourcing%20from%20South%20Africa." alt="WhatsApp QR Code" className="w-[150px] h-[150px]" referrerPolicy="no-referrer" />
+                </div>
+                <p className="text-sm text-white/50 text-center">Scan with your phone's camera to chat with us instantly on WhatsApp.</p>
               </div>
             </div>
           </div>

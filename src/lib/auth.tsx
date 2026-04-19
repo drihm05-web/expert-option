@@ -35,32 +35,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Fetch user from our MongoDB backend API
-          const response = await fetch(`/api/users/${firebaseUser.uid}`);
-          let userData: User;
+          // Always call POST to upsert user and ensure roles are correctly assigned
+          const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              name: firebaseUser.displayName || '',
+              role: 'client',
+              createdAt: new Date().toISOString()
+            })
+          });
           
-          if (response.ok) {
-            userData = await response.json();
-          } else if (response.status === 404) {
-            // Create new user via API
-            const newUserReq = await fetch('/api/users', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                id: firebaseUser.uid,
-                email: firebaseUser.email || '',
-                name: firebaseUser.displayName || '',
-                role: 'client',
-                createdAt: new Date().toISOString()
-              })
-            });
-            
-            if (!newUserReq.ok) throw new Error('Failed to create user in database');
-            userData = await newUserReq.json();
-          } else {
+          if (!response.ok) {
             throw new Error('Database connection failed');
           }
           
+          const userData: User = await response.json();
           setUser(userData);
           setRole(userData.role);
         } catch (error: any) {
