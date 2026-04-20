@@ -3,27 +3,10 @@ import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
 import { ArrowRight, ShieldCheck, Globe, Search, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSiteData } from '../lib/siteContext';
 
 export const Landing = () => {
-  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=2069&auto=format&fit=crop");
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings');
-        if (res.ok) {
-          const settings = await res.json();
-          const heroSetting = settings.find((s: any) => s.id === 'heroImage');
-          if (heroSetting && heroSetting.value) {
-            setHeroImage(heroSetting.value);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load settings:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
+  const { siteData } = useSiteData();
 
   return (
     <div className="flex flex-col">
@@ -31,7 +14,7 @@ export const Landing = () => {
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
           <img 
-            src={heroImage} 
+            src={siteData.heroImage} 
             alt="Luxury Vehicle" 
             className="w-full h-full object-cover brightness-110 contrast-125 saturate-110"
             referrerPolicy="no-referrer"
@@ -47,10 +30,7 @@ export const Landing = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
           >
-            Sourcing from South Africa.<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF1AB] to-[#D4AF37] italic font-serif drop-shadow-lg">
-              Delivered with Precision.
-            </span>
+            {siteData.landingTitle}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -58,7 +38,7 @@ export const Landing = () => {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-lg md:text-xl text-white max-w-2xl mx-auto mb-10 uppercase tracking-widest font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
           >
-            Your trusted cross-border sourcing and procurement partner.
+            {siteData.landingSubtitle}
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

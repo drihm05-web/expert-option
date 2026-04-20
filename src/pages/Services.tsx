@@ -3,8 +3,11 @@ import { motion } from 'motion/react';
 import { Car, Tractor, Package, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
+import { useSiteData } from '../lib/siteContext';
 
 export const Services = () => {
+  const { siteData } = useSiteData();
+
   const services = [
     {
       id: "vehicles",
@@ -12,7 +15,7 @@ export const Services = () => {
       title: "Vehicle Sourcing",
       description: "Access a wide range of passenger, commercial, and fleet vehicles. We handle sourcing, inspection, and export clearance. Specializing in Toyota Hilux, GR Sport, 4x4s, and heavy-duty trucks.",
       features: ["Passenger Vehicles", "Commercial Trucks", "Fleet Acquisitions", "Export Documentation"],
-      image: "https://images.unsplash.com/photo-1590362891991-f2009d3233bf?q=80&w=2069&auto=format&fit=crop"
+      image: siteData.serviceVehiclesImage
     },
     {
       id: "machinery",
@@ -20,7 +23,7 @@ export const Services = () => {
       title: "Machinery Sourcing",
       description: "Heavy-duty solutions for your business. We source reliable construction, agricultural, and industrial machinery direct from trusted suppliers.",
       features: ["Construction Equipment", "Agricultural Machinery", "Industrial Plant", "Condition Verification"],
-      image: "https://images.unsplash.com/photo-1581452292723-d343c683b791?q=80&w=2070&auto=format&fit=crop"
+      image: siteData.serviceMachineryImage
     },
     {
       id: "goods",
@@ -28,7 +31,7 @@ export const Services = () => {
       title: "General Goods",
       description: "From bulk supply to retail stock, we connect you with verified South African wholesalers and manufacturers for seamless procurement.",
       features: ["Bulk Commodities", "Retail Stock", "Supplier Verification", "Logistics Coordination"],
-      image: "https://images.unsplash.com/photo-1586528116311-ad8ed7c50a63?q=80&w=2070&auto=format&fit=crop"
+      image: siteData.serviceGoodsImage
     }
   ];
 

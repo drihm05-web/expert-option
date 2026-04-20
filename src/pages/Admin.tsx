@@ -22,6 +22,18 @@ export const Admin = () => {
   const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
   const [heroImage, setHeroImage] = useState('');
   const [mapEmbedUrl, setMapEmbedUrl] = useState('');
+  
+  // Custom Appearance State
+  const [fontHeading, setFontHeading] = useState('Outfit');
+  const [fontBody, setFontBody] = useState('Outfit');
+  const [landingTitle, setLandingTitle] = useState('GLOBAL PROCUREMENT & LOGISTICS');
+  const [landingSubtitle, setLandingSubtitle] = useState('Your trusted partner in high-value cross-border vehicle and machinery sourcing from South Africa.');
+  const [aboutTitle, setAboutTitle] = useState('Our Mission');
+  const [aboutImage, setAboutImage] = useState('https://images.unsplash.com/photo-1577953331668-cb0aa7608abf?auto=format&fit=crop&q=80');
+  const [serviceVehiclesImage, setServiceVehiclesImage] = useState('https://images.unsplash.com/photo-1590362891991-f2009d3233bf?auto=format&fit=crop&q=80');
+  const [serviceMachineryImage, setServiceMachineryImage] = useState('https://images.unsplash.com/photo-1581452292723-d343c683b791?auto=format&fit=crop&q=80');
+  const [serviceGoodsImage, setServiceGoodsImage] = useState('https://images.unsplash.com/photo-1586528116311-ad8ed7c50a63?auto=format&fit=crop&q=80');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -92,6 +104,21 @@ export const Admin = () => {
         if (mapSetting && mapSetting.value) {
           setMapEmbedUrl(mapSetting.value);
         }
+
+        ['fontHeading', 'fontBody', 'landingTitle', 'landingSubtitle', 'aboutTitle', 'aboutImage', 'serviceVehiclesImage', 'serviceMachineryImage', 'serviceGoodsImage'].forEach(key => {
+          const setting = settingsData.find((s: any) => s.id === key);
+          if (setting && setting.value) {
+            if (key === 'fontHeading') setFontHeading(setting.value);
+            if (key === 'fontBody') setFontBody(setting.value);
+            if (key === 'landingTitle') setLandingTitle(setting.value);
+            if (key === 'landingSubtitle') setLandingSubtitle(setting.value);
+            if (key === 'aboutTitle') setAboutTitle(setting.value);
+            if (key === 'aboutImage') setAboutImage(setting.value);
+            if (key === 'serviceVehiclesImage') setServiceVehiclesImage(setting.value);
+            if (key === 'serviceMachineryImage') setServiceMachineryImage(setting.value);
+            if (key === 'serviceGoodsImage') setServiceGoodsImage(setting.value);
+          }
+        });
       }
 
       setLoading(false);
@@ -240,22 +267,6 @@ export const Admin = () => {
     }
   };
 
-  const handleSaveHeroImage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'heroImage', value: heroImage })
-      });
-      if (!res.ok) throw new Error('Failed to save hero image');
-      toast.success('Hero image updated successfully!');
-    } catch (error: any) {
-      console.error("Error saving hero image:", error);
-      toast.error(error.message || 'Failed to save hero image.');
-    }
-  };
-
   const handleSaveMapEmbedUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -269,6 +280,33 @@ export const Admin = () => {
     } catch (error: any) {
       console.error("Error saving map embed URL:", error);
       toast.error(error.message || 'Failed to save map location.');
+    }
+  };
+
+  const handleSaveAppearance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const payload = {
+        fontHeading, fontBody, landingTitle, landingSubtitle, aboutTitle, aboutImage,
+        serviceVehiclesImage, serviceMachineryImage, serviceGoodsImage, heroImage
+      };
+      
+      await Promise.all(Object.entries(payload).map(([k, v]) => 
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: k, value: v })
+        })
+      ));
+      
+      toast.success('Site appearance updated! Refresh to see full font changes.');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      console.error("Error saving appearance:", error);
+      toast.error(error.message || 'Failed to save appearance settings.');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -330,8 +368,107 @@ export const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="vehicles" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Vehicles</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">User Roles</TabsTrigger>
+            <TabsTrigger value="appearance" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Appearance</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">Settings</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="appearance">
+            <Card className="bg-[#0a0a0a] border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#D4AF37]" />
+                  Site Content & Fonts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveAppearance} className="grid md:grid-cols-2 gap-8">
+                  {/* Left Column: Fonts */}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-[#D4AF37] font-bold uppercase tracking-wider mb-4 border-b border-white/10 pb-2">Typography Setup</h3>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-white">Headings Font</Label>
+                          <Select value={fontHeading} onValueChange={setFontHeading}>
+                            <SelectTrigger className="w-full bg-[#050505] border-white/20 text-white">
+                              <SelectValue placeholder="Outfit" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="Outfit">Outfit</SelectItem>
+                              <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Cinzel">Cinzel</SelectItem>
+                              <SelectItem value="Montserrat">Montserrat</SelectItem>
+                              <SelectItem value="Syne">Syne</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Body Copy Font</Label>
+                          <Select value={fontBody} onValueChange={setFontBody}>
+                            <SelectTrigger className="w-full bg-[#050505] border-white/20 text-white">
+                              <SelectValue placeholder="Outfit" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="Outfit">Outfit</SelectItem>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Montserrat">Montserrat</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Key Copy */}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-[#D4AF37] font-bold uppercase tracking-wider mb-4 border-b border-white/10 pb-2">Global Titles & Media</h3>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-white">Landing Page Main Headline</Label>
+                          <Input required value={landingTitle} onChange={e=>setLandingTitle(e.target.value)} className="bg-[#050505] border-white/10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Landing Page Subtitle</Label>
+                          <Input required value={landingSubtitle} onChange={e=>setLandingSubtitle(e.target.value)} className="bg-[#050505] border-white/10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Homepage Background Image (URL)</Label>
+                          <Input required value={heroImage} onChange={e=>setHeroImage(e.target.value)} className="bg-[#050505] border-white/10 text-white" placeholder="https://" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">About Page Mission Title</Label>
+                          <Input required value={aboutTitle} onChange={e=>setAboutTitle(e.target.value)} className="bg-[#050505] border-white/10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">About Page Mission Background (URL)</Label>
+                          <Input required value={aboutImage} onChange={e=>setAboutImage(e.target.value)} className="bg-[#050505] border-white/10 text-white" placeholder="https://" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Services: Vehicles Background (URL)</Label>
+                          <Input required value={serviceVehiclesImage} onChange={e=>setServiceVehiclesImage(e.target.value)} className="bg-[#050505] border-white/10 text-white" placeholder="https://" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Services: Machinery Background (URL)</Label>
+                          <Input required value={serviceMachineryImage} onChange={e=>setServiceMachineryImage(e.target.value)} className="bg-[#050505] border-white/10 text-white" placeholder="https://" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Services: Goods Background (URL)</Label>
+                          <Input required value={serviceGoodsImage} onChange={e=>setServiceGoodsImage(e.target.value)} className="bg-[#050505] border-white/10 text-white" placeholder="https://" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" disabled={savingSettings} className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold uppercase mt-8">
+                      {savingSettings ? 'Saving...' : 'Deploy Global Appearance Changes'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="requests">
             <Card className="bg-[#0a0a0a] border-white/10">
@@ -645,37 +782,6 @@ export const Admin = () => {
                     </div>
                     <Button type="submit" disabled={savingSettings} className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
                       {savingSettings ? 'Saving...' : 'Save Settings'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-[#0a0a0a] border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-[#D4AF37]" />
-                    Hero Image
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSaveHeroImage} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-white">Homepage Background Image URL</Label>
-                      <Input 
-                        required 
-                        value={heroImage} 
-                        onChange={e => setHeroImage(e.target.value)} 
-                        placeholder="https://images.unsplash.com/..."
-                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
-                      />
-                    </div>
-                    {heroImage && (
-                      <div className="mt-4 border border-white/10 rounded-xl overflow-hidden aspect-video">
-                        <img src={heroImage} alt="Hero Preview" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <Button type="submit" className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
-                      Save Hero Image
                     </Button>
                   </form>
                 </CardContent>

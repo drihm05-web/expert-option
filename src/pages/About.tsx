@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Shield, Target, CheckCircle, Globe2, Award, Briefcase } from 'lucide-react';
+import { useSiteData } from '../lib/siteContext';
 
 export const About = () => {
+  const { siteData } = useSiteData();
+
   return (
     <div className="min-h-screen bg-[#050505] pt-24 pb-12 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
@@ -72,8 +75,8 @@ export const About = () => {
             <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-[#D4AF37]/20 p-2 relative">
                <div className="absolute inset-0 bg-gradient-to-bl from-[#D4AF37]/20 to-transparent opacity-50 rounded-3xl" />
                <img 
-                 src="https://images.unsplash.com/photo-1541888081683-de077b96057a?q=80&w=2664&auto=format&fit=crop" 
-                 alt="Professional Handshake" 
+                 src={siteData.aboutImage} 
+                 alt="Professional Overview" 
                  className="w-full h-full object-cover rounded-2xl mix-blend-luminosity hover:mix-blend-normal transition-all duration-700 opacity-80"
                  referrerPolicy="no-referrer"
                />
@@ -91,7 +94,7 @@ export const About = () => {
                <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-[#D4AF37]/10 rounded-full blur-[50px] pointer-events-none" />
                
                <h2 className="text-3xl font-bold text-white mb-8 uppercase tracking-widest flex items-center gap-4">
-                 <Award className="w-8 h-8 text-[#D4AF37]" /> Our Mission
+                 <Award className="w-8 h-8 text-[#D4AF37]" /> {siteData.aboutTitle}
                </h2>
                
                <p className="text-lg text-white/70 leading-relaxed mb-8 font-light">
