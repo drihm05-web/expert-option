@@ -49,7 +49,7 @@ export const About = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.15, duration: 0.6 }}
-              className="bg-black/40 backdrop-blur-xl p-10 rounded-3xl border border-white/10 text-center hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.1)] transition-all group relative overflow-hidden"
+              className="bg-[#050505]/70 backdrop-blur-xl p-10 rounded-3xl border border-white/10 text-center hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.1)] transition-all group relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 mb-8 group-hover:scale-110 group-hover:bg-[#D4AF37]/10 transition-all duration-500">
@@ -87,7 +87,7 @@ export const About = () => {
             transition={{ duration: 0.8 }}
             className="flex flex-col justify-center"
           >
-            <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 p-10 md:p-14 relative overflow-hidden">
+            <div className="bg-[#050505]/70 backdrop-blur-xl rounded-3xl border border-white/10 p-10 md:p-14 relative overflow-hidden">
                <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-[#D4AF37]/10 rounded-full blur-[50px] pointer-events-none" />
                
                <h2 className="text-3xl font-bold text-white mb-8 uppercase tracking-widest flex items-center gap-4">

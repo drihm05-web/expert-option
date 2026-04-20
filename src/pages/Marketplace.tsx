@@ -57,13 +57,13 @@ export const Marketplace = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D4AF37]" />
               <Input 
                 placeholder="Search models..." 
-                className="pl-10 bg-black/40 backdrop-blur-md border-white/10 text-white focus-visible:ring-[#D4AF37] hover:border-[#D4AF37]/50 transition-colors"
+                className="pl-10 bg-[#050505]/80 backdrop-blur-md border-white/10 text-white focus-visible:ring-[#D4AF37] hover:border-[#D4AF37]/50 transition-colors"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Select value={brandFilter} onValueChange={setBrandFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-black/40 backdrop-blur-md border-white/10 text-white hover:border-[#D4AF37]/50 transition-colors">
+              <SelectTrigger className="w-full sm:w-48 bg-[#050505]/80 backdrop-blur-md border-white/10 text-white hover:border-[#D4AF37]/50 transition-colors">
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0a0a] border-white/10 text-white backdrop-blur-xl">
@@ -79,11 +79,11 @@ export const Marketplace = () => {
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="h-[400px] bg-black/40 backdrop-blur-md animate-pulse rounded-2xl border border-white/5" />
+              <div key={i} className="h-[400px] bg-[#050505]/70 backdrop-blur-md animate-pulse rounded-2xl border border-white/5" />
             ))}
           </div>
         ) : filteredVehicles.length === 0 ? (
-          <div className="text-center py-24 border border-white/10 rounded-3xl bg-black/40 backdrop-blur-md shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          <div className="text-center py-24 border border-white/10 rounded-3xl bg-[#050505]/70 backdrop-blur-md shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <Car className="w-16 h-16 text-[#D4AF37]/50 mx-auto mb-6" />
             <h3 className="text-2xl font-bold mb-2 text-white uppercase tracking-wider">No vehicles found</h3>
             <p className="text-white/50 mb-8">Try adjusting your search filters or request a custom sourcing.</p>
@@ -102,26 +102,26 @@ export const Marketplace = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
               >
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 overflow-hidden group hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transition-all flex flex-col h-full rounded-2xl">
+                <Card className="bg-[#050505]/70 backdrop-blur-xl border border-white/10 overflow-hidden group hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transition-all flex flex-col h-full rounded-2xl">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img 
                       src={vehicle.images?.[0] || vehicle.image_url || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1000&auto=format&fit=crop'} 
                       alt={vehicle.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 mix-blend-luminosity hover:mix-blend-normal opacity-80 group-hover:opacity-100"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-110 contrast-125 saturate-110 hover:saturate-125"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                     <div className="absolute top-4 right-4 flex gap-2">
                       <Badge className="bg-[#D4AF37] text-black font-bold uppercase tracking-wider border-none shadow-lg">{vehicle.condition}</Badge>
                     </div>
                   </div>
-                  <CardContent className="p-6 flex-1 bg-gradient-to-b from-transparent to-black/60 relative z-10 -mt-12">
+                  <CardContent className="p-6 flex-1 bg-gradient-to-b from-transparent to-black/80 relative z-10 -mt-20">
                     <div className="flex justify-between items-start mb-6">
                       <div className="pt-2">
-                        <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-[0.2em] mb-2">{vehicle.brand}</p>
-                        <h3 className="text-xl font-bold text-white leading-tight uppercase tracking-wide">{vehicle.title}</h3>
+                        <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-[0.2em] mb-2 drop-shadow-md">{vehicle.brand}</p>
+                        <h3 className="text-xl font-bold text-white leading-tight uppercase tracking-wide drop-shadow-md">{vehicle.title}</h3>
                       </div>
-                      <p className="text-2xl font-bold font-serif italic text-white drop-shadow-md pt-2">${(vehicle.price || 0).toLocaleString()}</p>
+                      <p className="text-2xl font-bold font-serif italic text-white drop-shadow-lg pt-2">${(vehicle.price || 0).toLocaleString()}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm text-white/70">
                       <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-[#D4AF37]" /><span className="text-white/40 uppercase text-[10px] tracking-wider w-12">Year</span> <span className="font-mono">{vehicle.year || 'N/A'}</span></div>
@@ -130,7 +130,7 @@ export const Marketplace = () => {
                       <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-[#D4AF37]" /><span className="text-white/40 uppercase text-[10px] tracking-wider w-12">Make</span> <span className="truncate">{vehicle.make || 'N/A'}</span></div>
                     </div>
                   </CardContent>
-                  <CardFooter className="p-6 pt-0 bg-black/60">
+                  <CardFooter className="p-6 pt-0 bg-black/80">
                     <Link to={`/dashboard?vehicle=${vehicle.id}`} className="w-full">
                       <Button className="w-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black transition-colors font-bold uppercase tracking-wider h-12 relative overflow-hidden group/btn">
                          <span className="relative z-10 transition-transform group-hover/btn:scale-105 inline-block">Request Export</span>

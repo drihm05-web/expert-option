@@ -21,6 +21,7 @@ export const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [eftDetails, setEftDetails] = useState({ bank: '', accountName: '', accountNumber: '', branchCode: '' });
   const [heroImage, setHeroImage] = useState('');
+  const [mapEmbedUrl, setMapEmbedUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -86,6 +87,10 @@ export const Admin = () => {
         const heroSetting = settingsData.find((s: any) => s.id === 'heroImage');
         if (heroSetting && heroSetting.value) {
           setHeroImage(heroSetting.value);
+        }
+        const mapSetting = settingsData.find((s: any) => s.id === 'mapEmbedUrl');
+        if (mapSetting && mapSetting.value) {
+          setMapEmbedUrl(mapSetting.value);
         }
       }
 
@@ -248,6 +253,22 @@ export const Admin = () => {
     } catch (error: any) {
       console.error("Error saving hero image:", error);
       toast.error(error.message || 'Failed to save hero image.');
+    }
+  };
+
+  const handleSaveMapEmbedUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'mapEmbedUrl', value: mapEmbedUrl })
+      });
+      if (!res.ok) throw new Error('Failed to save map embed URL');
+      toast.success('Map location updated successfully!');
+    } catch (error: any) {
+      console.error("Error saving map embed URL:", error);
+      toast.error(error.message || 'Failed to save map location.');
     }
   };
 
@@ -655,6 +676,47 @@ export const Admin = () => {
                     )}
                     <Button type="submit" className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
                       Save Hero Image
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#0a0a0a] border-white/10 md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-[#D4AF37]" />
+                    Footer Map Location
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSaveMapEmbedUrl} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-white">Google Maps Embed URL ("src" attribute only)</Label>
+                      <Input 
+                        required 
+                        value={mapEmbedUrl} 
+                        onChange={e => setMapEmbedUrl(e.target.value)} 
+                        placeholder="https://www.google.com/maps/embed?pb=..."
+                        className="bg-[#050505] border-white/10 text-white focus-visible:ring-[#D4AF37]" 
+                      />
+                      <p className="text-xs text-white/50 pt-1">Go to Google Maps &gt; Share &gt; Embed a map &gt; Copy ONLY the URL inside the src="..." attribute.</p>
+                    </div>
+                    {mapEmbedUrl && (
+                      <div className="mt-4 border border-white/10 rounded-xl overflow-hidden h-48 w-full bg-[#050505]">
+                        <iframe
+                          src={mapEmbedUrl}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0, filter: 'grayscale(80%) contrast(1.2) opacity(0.9)' }}
+                          allowFullScreen={false}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="Preview Map"
+                        />
+                      </div>
+                    )}
+                    <Button type="submit" className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
+                      Save Map Location
                     </Button>
                   </form>
                 </CardContent>

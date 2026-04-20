@@ -25,7 +25,7 @@ export const Journey = () => {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="bg-black/40 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 hover:border-[#D4AF37]/40 hover:shadow-[0_0_40px_rgba(212,175,55,0.1)] transition-all relative overflow-hidden group"
+            className="bg-[#050505]/70 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 hover:border-[#D4AF37]/40 hover:shadow-[0_0_40px_rgba(212,175,55,0.1)] transition-all relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-[80px] -z-10 group-hover:bg-[#D4AF37]/10 transition-colors" />
             <div className="flex items-center gap-4 mb-10 relative z-10">
@@ -47,7 +47,7 @@ export const Journey = () => {
                   <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#0a0a0a] bg-[#D4AF37] text-black font-bold text-sm shrink-0 md:order-1 md:group-odd/step:-translate-x-1/2 md:group-even/step:translate-x-1/2 shadow-[0_0_15px_rgba(212,175,55,0.4)] z-10 group-hover/step:scale-110 transition-transform">
                     {item.step}
                   </div>
-                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-xl border border-white/10 bg-black/60 backdrop-blur-sm group-hover/step:border-[#D4AF37]/50 transition-colors">
+                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-xl border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm group-hover/step:border-[#D4AF37]/50 transition-colors">
                     <h3 className="font-bold text-white mb-1 tracking-wide">{item.title}</h3>
                     <p className="text-sm text-white/60 font-light">{item.desc}</p>
                   </div>
@@ -61,7 +61,7 @@ export const Journey = () => {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="bg-black/40 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 hover:border-white/30 hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] transition-all relative overflow-hidden group"
+            className="bg-[#050505]/70 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 hover:border-white/30 hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] transition-all relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -z-10 group-hover:bg-white/10 transition-colors" />
             <div className="flex items-center gap-4 mb-10 relative z-10">
@@ -83,7 +83,7 @@ export const Journey = () => {
                   <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#0a0a0a] bg-white text-black font-bold text-sm shrink-0 md:order-1 md:group-odd/step:-translate-x-1/2 md:group-even/step:translate-x-1/2 shadow-[0_0_15px_rgba(255,255,255,0.2)] z-10 group-hover/step:scale-110 transition-transform">
                     {item.step}
                   </div>
-                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-xl border border-white/10 bg-black/60 backdrop-blur-sm group-hover/step:border-white/40 transition-colors">
+                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-xl border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm group-hover/step:border-white/40 transition-colors">
                     <h3 className="font-bold text-white mb-1 tracking-wide">{item.title}</h3>
                     <p className="text-sm text-white/60 font-light">{item.desc}</p>
                   </div>

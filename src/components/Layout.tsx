@@ -24,10 +24,33 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   // Admin Summary State
   const [adminSummary, setAdminSummary] = useState({ pendingRequests: 0, newInquiries: 0 });
 
+  // Map Embed Default (Woodmead Office Park, South Africa)
+  const defaultMapUrl = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.283838202513!2d28.05831627581566!3d-26.056985058097566!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e9573f4e3c3161b%3A0x8bae7b9b009581ae!2sWoodmead%20Office%20Park!5e0!3m2!1sen!2sus!4v1713531000000!5m2!1sen!2sus";
+  const [mapEmbedUrl, setMapEmbedUrl] = useState(defaultMapUrl);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Fetch Global Settings (like map URL)
+  useEffect(() => {
+    const fetchGlobalSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const settings = await res.json();
+          const mapSetting = settings.find((s: any) => s.id === 'mapEmbedUrl');
+          if (mapSetting && mapSetting.value) {
+            setMapEmbedUrl(mapSetting.value);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load global settings", err);
+      }
+    };
+    fetchGlobalSettings();
+  }, []);
 
   useEffect(() => {
     let interval: any;
@@ -269,6 +292,22 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
         </div>
         
+        {/* Global Location Map */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+          <div className="h-64 rounded-3xl border border-white/10 overflow-hidden shadow-[0_0_40px_rgba(212,175,55,0.05)] w-full relative">
+            <iframe
+              src={mapEmbedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0, filter: 'grayscale(80%) contrast(1.2) opacity(0.9)', position: 'absolute', top: 0, left: 0 }}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Exertion Exports Location"
+            />
+          </div>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-xs">© {new Date().getFullYear()} Exertion Exports. All rights reserved.</p>
           <div className="flex gap-4">

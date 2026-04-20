@@ -78,8 +78,8 @@ export const Services = () => {
                 </div>
               </div>
               <div className="md:w-2/5 relative min-h-[300px] overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent z-10 md:bg-gradient-to-l" />
-                <img src={service.image} alt={service.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 group-hover:opacity-100 mix-blend-luminosity hover:mix-blend-normal" referrerPolicy="no-referrer" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10 md:bg-gradient-to-l" />
+                <img src={service.image} alt={service.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-110 contrast-125 saturate-110 hover:saturate-125" referrerPolicy="no-referrer" />
               </div>
             </motion.div>
           ))}

@@ -28,26 +28,27 @@ export const Landing = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
           <img 
             src={heroImage} 
             alt="Luxury Vehicle" 
-            className="w-full h-full object-cover opacity-40 mix-blend-overlay"
+            className="w-full h-full object-cover brightness-110 contrast-125 saturate-110"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-[#050505]/30" />
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mt-16">
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase drop-shadow-2xl"
+            className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 uppercase drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
           >
             Sourcing from South Africa.<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#F3C93F] italic font-serif">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF1AB] to-[#D4AF37] italic font-serif drop-shadow-lg">
               Delivered with Precision.
             </span>
           </motion.h1>
@@ -55,7 +56,7 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 uppercase tracking-widest"
+            className="text-lg md:text-xl text-white max-w-2xl mx-auto mb-10 uppercase tracking-widest font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
           >
             Your trusted cross-border sourcing and procurement partner.
           </motion.p>
@@ -63,20 +64,20 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center drop-shadow-xl"
           >
             <Link to="/contact?subject=Quote Request">
-              <Button size="lg" className="w-full sm:w-auto bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold tracking-wider uppercase h-14 px-8 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all">
+              <Button size="lg" className="w-full sm:w-auto bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold tracking-[0.15em] uppercase h-14 px-8 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.6)] transition-all">
                 Request a Quote
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm border-[#D4AF37]/50 text-white hover:bg-[#D4AF37]/10 font-bold tracking-wider uppercase h-14 px-8">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm border-[#D4AF37]/50 text-white hover:bg-[#D4AF37]/10 font-bold tracking-[0.15em] uppercase h-14 px-8 transition-colors">
                 Start Sourcing
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="ghost" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm text-white hover:bg-white/10 font-bold tracking-wider uppercase h-14 px-8">
+              <Button size="lg" variant="ghost" className="w-full sm:w-auto bg-black/40 backdrop-blur-sm text-white hover:bg-white/10 font-bold tracking-[0.15em] uppercase h-14 px-8 transition-colors">
                 Speak to Our Team
               </Button>
             </Link>
