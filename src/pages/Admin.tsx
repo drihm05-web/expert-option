@@ -52,6 +52,11 @@ export const Admin = () => {
   const [vPrice, setVPrice] = useState('');
   const [vCondition, setVCondition] = useState('Used');
   const [vStatus, setVStatus] = useState('Available');
+  const [vFuelType, setVFuelType] = useState('Diesel');
+  const [vTransmission, setVTransmission] = useState('Automatic');
+  const [vEngineSize, setVEngineSize] = useState('');
+  const [vDriveType, setVDriveType] = useState('4x4');
+  const [vBodyType, setVBodyType] = useState('SUV');
   const [vImage, setVImage] = useState('');
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
@@ -144,6 +149,11 @@ export const Admin = () => {
         price: Number(vPrice),
         condition: vCondition,
         status: vStatus,
+        fuelType: vFuelType,
+        transmission: vTransmission,
+        engineSize: vEngineSize,
+        driveType: vDriveType,
+        bodyType: vBodyType,
         images: vImage ? [vImage] : []
       };
 
@@ -185,6 +195,11 @@ export const Admin = () => {
     setVPrice(v.price?.toString() || '');
     setVCondition(v.condition || 'Used');
     setVStatus(v.status || 'Available');
+    setVFuelType(v.fuelType || 'Diesel');
+    setVTransmission(v.transmission || 'Automatic');
+    setVEngineSize(v.engineSize || '');
+    setVDriveType(v.driveType || '4x4');
+    setVBodyType(v.bodyType || 'SUV');
     setVImage(v.images?.[0] || v.image_url || '');
     setIsAddVehicleOpen(true);
   };
@@ -592,27 +607,41 @@ export const Admin = () => {
                   <DialogTrigger asChild>
                     <Button className="bg-[#D4AF37] text-black hover:bg-[#F3C93F]"><Plus className="w-4 h-4 mr-2"/> Add Vehicle</Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-[#0a0a0a] border-white/10 text-white">
+                  <DialogContent className="bg-[#0a0a0a] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>{editingVehicleId ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+                      <DialogTitle>{editingVehicleId ? 'Edit Vehicle Details' : 'Add New Vehicle to Inventory'}</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleAddVehicle} className="space-y-4 pt-4">
-                      <div className="grid grid-cols-2 gap-4">
+                    <form onSubmit={handleAddVehicle} className="space-y-6 pt-4">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="space-y-2">
-                          <Label>Title</Label>
-                          <Input required value={vTitle} onChange={e=>setVTitle(e.target.value)} className="bg-[#050505] border-white/20" />
+                          <Label>Listing Title</Label>
+                          <Input required value={vTitle} onChange={e=>setVTitle(e.target.value)} className="bg-[#050505] border-white/20" placeholder="e.g., 2024 Toyota Land Cruiser 300" />
                         </div>
                         <div className="space-y-2">
-                          <Label>Brand</Label>
-                          <Input required value={vBrand} onChange={e=>setVBrand(e.target.value)} className="bg-[#050505] border-white/20" />
+                          <Label>Brand (Manufacturer)</Label>
+                          <Select value={vBrand} onValueChange={setVBrand}>
+                            <SelectTrigger className="bg-[#050505] border-white/20"><SelectValue placeholder="Select Brand"/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              {['Toyota', 'Lexus', 'Land Rover', 'BMW', 'Mercedes-Benz', 'Audi', 'Ford', 'Isuzu', 'Volkswagen', 'Porsche', 'Bentley', 'Rolls Royce'].map(b => (
+                                <SelectItem key={b} value={b}>{b}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Make</Label>
-                          <Input required value={vMake} onChange={e=>setVMake(e.target.value)} className="bg-[#050505] border-white/20" />
+                          <Label>Body Type</Label>
+                          <Select value={vBodyType} onValueChange={setVBodyType}>
+                            <SelectTrigger className="bg-[#050505] border-white/20"><SelectValue/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              {['SUV', 'Bakkie', 'Sedan', 'Coupe', 'Hatchback', 'Truck', 'Bus', 'Luxury'].map(t => (
+                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Model</Label>
-                          <Input required value={vModel} onChange={e=>setVModel(e.target.value)} className="bg-[#050505] border-white/20" />
+                          <Label>Price (USD)</Label>
+                          <Input type="number" required value={vPrice} onChange={e=>setVPrice(e.target.value)} className="bg-[#050505] border-white/20" />
                         </div>
                         <div className="space-y-2">
                           <Label>Year</Label>
@@ -623,12 +652,43 @@ export const Admin = () => {
                           <Input type="number" required value={vMileage} onChange={e=>setVMileage(e.target.value)} className="bg-[#050505] border-white/20" />
                         </div>
                         <div className="space-y-2">
-                          <Label>Price (USD)</Label>
-                          <Input type="number" required value={vPrice} onChange={e=>setVPrice(e.target.value)} className="bg-[#050505] border-white/20" />
+                          <Label>Fuel Type</Label>
+                          <Select value={vFuelType} onValueChange={setVFuelType}>
+                            <SelectTrigger className="bg-[#050505] border-white/20"><SelectValue/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="Diesel">Diesel</SelectItem>
+                              <SelectItem value="Petrol">Petrol</SelectItem>
+                              <SelectItem value="Hybrid">Hybrid</SelectItem>
+                              <SelectItem value="Electric">Electric</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Image URL</Label>
-                          <Input value={vImage} onChange={e=>setVImage(e.target.value)} className="bg-[#050505] border-white/20" placeholder="https://..." />
+                          <Label>Transmission</Label>
+                          <Select value={vTransmission} onValueChange={setVTransmission}>
+                            <SelectTrigger className="bg-[#050505] border-white/20"><SelectValue/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="Automatic">Automatic</SelectItem>
+                              <SelectItem value="Manual">Manual</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Engine Size</Label>
+                          <Input value={vEngineSize} onChange={e=>setVEngineSize(e.target.value)} className="bg-[#050505] border-white/20" placeholder="e.g. 3.0L V6" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Drive Type</Label>
+                          <Select value={vDriveType} onValueChange={setVDriveType}>
+                            <SelectTrigger className="bg-[#050505] border-white/20"><SelectValue/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0a] border-white/10 text-white">
+                              <SelectItem value="4x4">4x4</SelectItem>
+                              <SelectItem value="4x2">4x2</SelectItem>
+                              <SelectItem value="AWD">AWD</SelectItem>
+                              <SelectItem value="RWD">RWD</SelectItem>
+                              <SelectItem value="FWD">FWD</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Condition</Label>
@@ -653,8 +713,13 @@ export const Admin = () => {
                           </Select>
                         </div>
                       </div>
-                      <Button type="submit" className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F]">
-                        {editingVehicleId ? 'Update Vehicle' : 'Save Vehicle'}
+                      <div className="space-y-2">
+                        <Label>High Resolution Image URL</Label>
+                        <Input value={vImage} onChange={e=>setVImage(e.target.value)} className="bg-[#050505] border-white/20" placeholder="https://..." />
+                        <p className="text-[10px] text-white/40 italic">Better quality images improve sales conversion.</p>
+                      </div>
+                      <Button type="submit" className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold uppercase tracking-wider py-6">
+                        {editingVehicleId ? 'Update Vehicle Details' : 'Save Vehicle to Inventory'}
                       </Button>
                     </form>
                   </DialogContent>
@@ -666,6 +731,7 @@ export const Admin = () => {
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/50">Vehicle</TableHead>
                       <TableHead className="text-white/50">Brand</TableHead>
+                      <TableHead className="text-white/50">Body Type</TableHead>
                       <TableHead className="text-white/50">Price</TableHead>
                       <TableHead className="text-white/50">Status</TableHead>
                       <TableHead className="text-white/50 text-right">Actions</TableHead>
@@ -676,6 +742,9 @@ export const Admin = () => {
                       <TableRow key={v.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white font-medium">{v.title}</TableCell>
                         <TableCell className="text-white">{v.brand}</TableCell>
+                        <TableCell className="text-white">
+                           <Badge variant="outline" className="border-white/20 text-white/70 text-[10px]">{v.bodyType || 'SUV'}</Badge>
+                        </TableCell>
                         <TableCell className="text-white">${(v.price || 0).toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="border-[#D4AF37] text-[#D4AF37]">{v.status}</Badge>

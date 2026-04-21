@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
@@ -293,36 +293,62 @@ export const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="vehicles">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {vehicles.map((vehicle) => (
-                <Card key={vehicle.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden group">
-                  <div className="aspect-[4/3] overflow-hidden relative">
+                <Card key={vehicle.id} className="bg-[#0a0a0a] border-white/10 overflow-hidden group hover:border-[#D4AF37]/50 transition-all flex flex-col h-full rounded-xl">
+                  <div className="aspect-[16/9] overflow-hidden relative">
                     <img 
-                      src={vehicle.image_url || vehicle.images?.[0] || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1000&auto=format&fit=crop'} 
-                      alt={vehicle.title || `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim()}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      src={vehicle.images?.[0] || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=1200&auto=format&fit=crop'} 
+                      alt={vehicle.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-110 contrast-125"
                       referrerPolicy="no-referrer"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute top-4 right-4">
-                      <Badge className="bg-[#D4AF37] text-black font-bold uppercase tracking-wider">
+                      <Badge className="bg-[#D4AF37] text-black font-bold uppercase tracking-wider text-xs px-3 shadow-lg">
                         ${(vehicle.price || 0).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-2">{vehicle.title || `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Unknown Vehicle'}</h3>
-                    <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
-                      <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {(vehicle.mileage || 0).toLocaleString()} km</span>
+                  <CardContent className="p-6 flex-1">
+                    <div className="mb-4">
+                      <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.2em] mb-1">{vehicle.brand}</p>
+                      <h3 className="text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">{vehicle.title}</h3>
                     </div>
+                    <div className="grid grid-cols-2 gap-3 text-[11px] text-white/50 border-t border-white/5 pt-4">
+                      <div className="flex flex-col">
+                        <span className="uppercase tracking-widest text-[9px] mb-0.5">KM</span>
+                        <span className="text-white font-mono">{(vehicle.mileage || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="uppercase tracking-widest text-[9px] mb-0.5">Year</span>
+                        <span className="text-white font-mono">{vehicle.year}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="uppercase tracking-widest text-[9px] mb-0.5">Fuel</span>
+                        <span className="text-white uppercase">{vehicle.fuelType || 'Diesel'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="uppercase tracking-widest text-[9px] mb-0.5">Gearbox</span>
+                        <span className="text-white uppercase">{vehicle.transmission || 'Auto'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="p-6 pt-0">
                     <Button 
                       onClick={() => handleRequestVehicle(vehicle.id)}
-                      className="w-full bg-white/5 text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
+                      className="w-full bg-white/5 text-white border border-white/10 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all font-bold uppercase tracking-wider h-11"
                     >
-                      Request Export
+                      Export This Vehicle
                     </Button>
-                  </CardContent>
+                  </CardFooter>
                 </Card>
               ))}
+              {vehicles.length === 0 && (
+                <div className="col-span-full py-24 text-center border border-dashed border-white/10 rounded-2xl">
+                   <p className="text-white/30 italic">No available vehicles at the moment. Check back soon.</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
