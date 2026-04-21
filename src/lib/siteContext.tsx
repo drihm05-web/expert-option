@@ -8,6 +8,7 @@ export const defaultSiteOptions = {
   aboutTitle: 'Our Mission',
   aboutImage: 'https://images.unsplash.com/photo-1577953331668-cb0aa7608abf?auto=format&fit=crop&q=80',
   heroImage: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80',
+  tagline: 'THE EXPORT ORACLES',
   serviceVehiclesImage: 'https://images.unsplash.com/photo-1590362891991-f2009d3233bf?q=80&w=2069&auto=format&fit=crop',
   serviceMachineryImage: 'https://images.unsplash.com/photo-1581452292723-d343c683b791?q=80&w=2070&auto=format&fit=crop',
   serviceGoodsImage: 'https://images.unsplash.com/photo-1586528116311-ad8ed7c50a63?q=80&w=2070&auto=format&fit=crop',

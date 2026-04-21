@@ -13,7 +13,7 @@ export const Services = () => {
       id: "vehicles",
       icon: <Car className="w-12 h-12 text-[#D4AF37]" />,
       title: "Vehicle Sourcing",
-      description: "Access a wide range of passenger, commercial, and fleet vehicles. We handle sourcing, inspection, and export clearance. Specializing in Toyota Hilux, GR Sport, 4x4s, and heavy-duty trucks.",
+      description: "Access a wide range of passenger, commercial, and fleet vehicles. We handle sourcing, inspection, and export clearance. Specializing in high-value big cars, premium SUVs, bakkies (4x4 double-cabs), and heavy-duty trucks.",
       features: ["Passenger Vehicles", "Commercial Trucks", "Fleet Acquisitions", "Export Documentation"],
       image: siteData.serviceVehiclesImage
     },

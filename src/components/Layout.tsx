@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useSiteData } from '../lib/siteContext';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Car, LogIn, LogOut, LayoutDashboard, Settings, Menu, X, MessageCircle, MapPin, Phone, Mail } from 'lucide-react';
+import { Globe, LogIn, LogOut, LayoutDashboard, Settings, Menu, X, MessageCircle, MapPin, Phone, Mail } from 'lucide-react';
 import { Toaster } from 'sonner';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, role, login, logout } = useAuth();
+  const { siteData } = useSiteData();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -114,10 +116,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#997A15] flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all">
-                <Car className="w-5 h-5 text-black" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#997A15] flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all shrink-0">
+                <Globe className="w-5 h-5 text-black" />
               </div>
-              <span className="font-bold text-xl tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg tracking-tight uppercase leading-none">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+                <span className="text-[8px] text-[#D4AF37] font-bold tracking-[0.25em] uppercase mt-1">{siteData.tagline}</span>
+              </div>
             </Link>
             
             <div className="hidden md:flex items-center gap-6">
@@ -244,9 +249,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
           
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Car className="w-6 h-6 text-[#D4AF37]" />
-              <span className="font-bold text-lg tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <Globe className="w-6 h-6 text-[#D4AF37]" />
+                <span className="font-bold text-lg tracking-tight uppercase">Exertion <span className="text-[#D4AF37]">Exports</span></span>
+              </div>
+              <span className="text-[10px] text-[#D4AF37] font-bold tracking-[0.3em] uppercase pl-9">{siteData.tagline}</span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed">
               Your premium partner for cross-border sourcing and procurement of vehicles, machinery, and general goods from South Africa.

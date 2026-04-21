@@ -28,6 +28,7 @@ export const Admin = () => {
   const [fontBody, setFontBody] = useState('Outfit');
   const [landingTitle, setLandingTitle] = useState('GLOBAL PROCUREMENT & LOGISTICS');
   const [landingSubtitle, setLandingSubtitle] = useState('Your trusted partner in high-value cross-border vehicle and machinery sourcing from South Africa.');
+  const [tagline, setTagline] = useState('THE EXPORT ORACLES');
   const [aboutTitle, setAboutTitle] = useState('Our Mission');
   const [aboutImage, setAboutImage] = useState('https://images.unsplash.com/photo-1577953331668-cb0aa7608abf?auto=format&fit=crop&q=80');
   const [serviceVehiclesImage, setServiceVehiclesImage] = useState('https://images.unsplash.com/photo-1590362891991-f2009d3233bf?auto=format&fit=crop&q=80');
@@ -105,13 +106,14 @@ export const Admin = () => {
           setMapEmbedUrl(mapSetting.value);
         }
 
-        ['fontHeading', 'fontBody', 'landingTitle', 'landingSubtitle', 'aboutTitle', 'aboutImage', 'serviceVehiclesImage', 'serviceMachineryImage', 'serviceGoodsImage'].forEach(key => {
+        ['fontHeading', 'fontBody', 'landingTitle', 'landingSubtitle', 'tagline', 'aboutTitle', 'aboutImage', 'serviceVehiclesImage', 'serviceMachineryImage', 'serviceGoodsImage'].forEach(key => {
           const setting = settingsData.find((s: any) => s.id === key);
           if (setting && setting.value) {
             if (key === 'fontHeading') setFontHeading(setting.value);
             if (key === 'fontBody') setFontBody(setting.value);
             if (key === 'landingTitle') setLandingTitle(setting.value);
             if (key === 'landingSubtitle') setLandingSubtitle(setting.value);
+            if (key === 'tagline') setTagline(setting.value);
             if (key === 'aboutTitle') setAboutTitle(setting.value);
             if (key === 'aboutImage') setAboutImage(setting.value);
             if (key === 'serviceVehiclesImage') setServiceVehiclesImage(setting.value);
@@ -288,7 +290,7 @@ export const Admin = () => {
     setSavingSettings(true);
     try {
       const payload = {
-        fontHeading, fontBody, landingTitle, landingSubtitle, aboutTitle, aboutImage,
+        fontHeading, fontBody, landingTitle, landingSubtitle, tagline, aboutTitle, aboutImage,
         serviceVehiclesImage, serviceMachineryImage, serviceGoodsImage, heroImage
       };
       
@@ -433,6 +435,10 @@ export const Admin = () => {
                         <div className="space-y-2">
                           <Label className="text-white">Landing Page Subtitle</Label>
                           <Input required value={landingSubtitle} onChange={e=>setLandingSubtitle(e.target.value)} className="bg-[#050505] border-white/10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">Site Tagline (Header/Footer)</Label>
+                          <Input required value={tagline} onChange={e=>setTagline(e.target.value)} className="bg-[#050505] border-white/10 text-white" />
                         </div>
                         <div className="space-y-2">
                           <Label className="text-white">Homepage Background Image (URL)</Label>
