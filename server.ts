@@ -14,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
+let cachedClient: MongoClient | null = null;
 let cachedDb: any = null;
 
 async function connectDB() {
@@ -21,18 +22,23 @@ async function connectDB() {
   
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error('MONGODB_URI environment variable is missing.');
-    throw new Error('MONGODB_URI missing');
+    console.error('MONGODB_URI environment variable is missing. Current env keys:', Object.keys(process.env).join(', '));
+    throw new Error('MONGODB_URI missing. If you just added it in Vercel, you need to trigger a Redeploy!');
   }
   
   try {
-    const client = new MongoClient(uri);
-    await client.connect();
-    cachedDb = client.db('exertion');
-    console.log('Connected to MongoDB');
+    if (!cachedClient) {
+      cachedClient = new MongoClient(uri, {
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+      });
+      await cachedClient.connect();
+    }
+    cachedDb = cachedClient.db('exertion');
     return cachedDb;
   } catch (error) {
     console.error('MongoDB connection error:', error);
+    cachedClient = null; // Reset client on error
     throw error;
   }
 }
