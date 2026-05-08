@@ -47,14 +47,16 @@ async function connectDB() {
 }
 
 // --- API ROUTES ---
+const apiRouter = express.Router();
 
 // Health check
-app.get('/api/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
   res.json({ status: 'ok', environment: process.env.NODE_ENV });
 });
 
 // Auth
-app.post('/api/auth/register', async (req, res) => {
+apiRouter.post('/auth/register', async (req, res) => {
+  console.log('Register request:', req.body.email);
   try {
     const db = await connectDB();
     const { email, password, name } = req.body;
@@ -92,7 +94,8 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+apiRouter.post('/auth/login', async (req, res) => {
+  console.log('Login attempt:', req.body.email);
   try {
     const db = await connectDB();
     const { email, password } = req.body;
@@ -117,7 +120,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', async (req, res) => {
+apiRouter.get('/auth/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -149,7 +152,7 @@ app.get('/api/auth/me', async (req, res) => {
 });
 
 // Users
-app.get('/api/users/:id', async (req, res) => {
+apiRouter.get('/users/:id', async (req, res) => {
   try {
     const db = await connectDB();
     const user = await db.collection('users').findOne({ id: req.params.id });
@@ -164,7 +167,7 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-app.get('/api/users', async (req, res) => {
+apiRouter.get('/users', async (req, res) => {
   try {
     const db = await connectDB();
     const users = await db.collection('users').find({}).toArray();
@@ -175,7 +178,7 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.post('/api/users', async (req, res) => {
+apiRouter.post('/users', async (req, res) => {
   try {
     const db = await connectDB();
     const { id, email, name, role, createdAt } = req.body;
@@ -202,7 +205,7 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-app.patch('/api/users/:id', async (req, res) => {
+apiRouter.patch('/users/:id', async (req, res) => {
   try {
     const db = await connectDB();
     await db.collection('users').updateOne(
@@ -217,7 +220,7 @@ app.patch('/api/users/:id', async (req, res) => {
 });
 
 // Vehicles
-app.get('/api/vehicles', async (req, res) => {
+apiRouter.get('/vehicles', async (req, res) => {
   try {
     const db = await connectDB();
     const vehicles = await db.collection('vehicles').find({}).toArray();
@@ -228,7 +231,7 @@ app.get('/api/vehicles', async (req, res) => {
   }
 });
 
-app.post('/api/vehicles', async (req, res) => {
+apiRouter.post('/vehicles', async (req, res) => {
   try {
     const db = await connectDB();
     const result = await db.collection('vehicles').insertOne({ ...req.body, createdAt: new Date().toISOString() });
@@ -239,7 +242,7 @@ app.post('/api/vehicles', async (req, res) => {
   }
 });
 
-app.patch('/api/vehicles/:id', async (req, res) => {
+apiRouter.patch('/vehicles/:id', async (req, res) => {
   try {
     const db = await connectDB();
     await db.collection('vehicles').updateOne(
@@ -253,7 +256,7 @@ app.patch('/api/vehicles/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/vehicles/:id', async (req, res) => {
+apiRouter.delete('/vehicles/:id', async (req, res) => {
   try {
     const db = await connectDB();
     await db.collection('vehicles').deleteOne({ _id: new ObjectId(req.params.id) });
@@ -265,7 +268,7 @@ app.delete('/api/vehicles/:id', async (req, res) => {
 });
 
 // Export Requests
-app.get('/api/export-requests', async (req, res) => {
+apiRouter.get('/export-requests', async (req, res) => {
   try {
     const db = await connectDB();
     const userId = req.query.userId as string;
@@ -281,7 +284,7 @@ app.get('/api/export-requests', async (req, res) => {
   }
 });
 
-app.post('/api/export-requests', async (req, res) => {
+apiRouter.post('/export-requests', async (req, res) => {
   try {
     const db = await connectDB();
     const result = await db.collection('export_requests').insertOne({
@@ -295,7 +298,7 @@ app.post('/api/export-requests', async (req, res) => {
   }
 });
 
-app.patch('/api/export-requests/:id', async (req, res) => {
+apiRouter.patch('/export-requests/:id', async (req, res) => {
   try {
     const db = await connectDB();
     await db.collection('export_requests').updateOne(
@@ -310,7 +313,7 @@ app.patch('/api/export-requests/:id', async (req, res) => {
 });
 
 // Inquiries
-app.get('/api/inquiries', async (req, res) => {
+apiRouter.get('/inquiries', async (req, res) => {
   try {
     const db = await connectDB();
     const inquiries = await db.collection('inquiries').find({}).toArray();
@@ -321,7 +324,7 @@ app.get('/api/inquiries', async (req, res) => {
   }
 });
 
-app.post('/api/inquiries', async (req, res) => {
+apiRouter.post('/inquiries', async (req, res) => {
   try {
     const db = await connectDB();
     const result = await db.collection('inquiries').insertOne({
@@ -335,7 +338,7 @@ app.post('/api/inquiries', async (req, res) => {
   }
 });
 
-app.patch('/api/inquiries/:id', async (req, res) => {
+apiRouter.patch('/inquiries/:id', async (req, res) => {
   try {
     const db = await connectDB();
     await db.collection('inquiries').updateOne(
@@ -350,7 +353,7 @@ app.patch('/api/inquiries/:id', async (req, res) => {
 });
 
 // Messages (Chat)
-app.get('/api/messages', async (req, res) => {
+apiRouter.get('/messages', async (req, res) => {
   try {
     const db = await connectDB();
     const requestId = req.query.requestId as string;
@@ -364,7 +367,7 @@ app.get('/api/messages', async (req, res) => {
   }
 });
 
-app.post('/api/messages', async (req, res) => {
+apiRouter.post('/messages', async (req, res) => {
   try {
     const db = await connectDB();
     const result = await db.collection('messages').insertOne({
@@ -379,7 +382,7 @@ app.post('/api/messages', async (req, res) => {
 });
 
 // Settings
-app.get('/api/settings', async (req, res) => {
+apiRouter.get('/settings', async (req, res) => {
   try {
     const db = await connectDB();
     const settings = await db.collection('settings').find({}).toArray();
@@ -390,7 +393,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-app.post('/api/settings', async (req, res) => {
+apiRouter.post('/settings', async (req, res) => {
   try {
     const db = await connectDB();
     const { key, value } = req.body;
@@ -406,6 +409,14 @@ app.post('/api/settings', async (req, res) => {
   }
 });
 
+// Fallback for API routes
+apiRouter.all('*any', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found', path: req.originalUrl });
+});
+
+// Mounting the router
+app.use('/api', apiRouter);
+
 // --- VITE MIDDLEWARE ---
 if (process.env.NODE_ENV !== "production") {
   import("vite").then(async (vite) => {
@@ -420,7 +431,7 @@ if (process.env.NODE_ENV !== "production") {
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, 'dist');
   app.use(express.static(distPath));
-  app.get('*', (req, res) => {
+  app.get('*all', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
