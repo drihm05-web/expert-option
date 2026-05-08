@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA_KOBxwroEc6qbSbfIrb-kfTeQm2812Ik",
@@ -17,5 +16,3 @@ export const auth = getAuth(app);
 
 // Fix IndexedDB errors in iframes/certain browsers
 setPersistence(auth, browserSessionPersistence).catch(console.error);
-
-export const db = getFirestore(app, "exertion");
