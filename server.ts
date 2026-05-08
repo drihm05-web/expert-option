@@ -4,11 +4,14 @@ import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
 const app = express();
 const PORT = typeof process.env.PORT === 'string' ? parseInt(process.env.PORT, 10) : 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
 
 app.use(cors());
 app.use(express.json());
@@ -44,6 +47,101 @@ async function connectDB() {
 }
 
 // --- API ROUTES ---
+
+// Auth
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { email, password, name } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const existingUser = await db.collection('users').findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const isAdmin = email === 'drihm05@gmail.com' || email === 'dominic@exertionexports.com';
+    const role = isAdmin ? 'admin' : 'client';
+    
+    const newUser = {
+      email,
+      name,
+      password: hashedPassword,
+      role,
+      createdAt: new Date().toISOString()
+    };
+    
+    const result = await db.collection('users').insertOne(newUser);
+    const userId = result.insertedId.toString();
+
+    // Set id as string representation of _id for consistency
+    await db.collection('users').updateOne(
+      { _id: result.insertedId },
+      { $set: { id: userId } }
+    );
+
+    const token = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
+    
+    res.status(201).json({ token, user: { id: userId, email, name, role } });
+  } catch (error: any) {
+    console.error('Error in register:', error);
+    res.status(500).json({ error: 'Failed to register', details: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { email, password } = req.body;
+
+    const user = await db.collection('users').findOne({ email });
+    if (!user || !user.password) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const token = jwt.sign({ userId: user.id || user._id.toString(), role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    
+    res.json({ token, user: { id: user.id || user._id.toString(), email: user.email, name: user.name, role: user.role } });
+  } catch (error: any) {
+    console.error('Error in login:', error);
+    res.status(500).json({ error: 'Failed to login', details: error.message });
+  }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+
+    const db = await connectDB();
+    const user = await db.collection('users').findOne({ 
+      $or: [{ id: decoded.userId }, { _id: new ObjectId(decoded.userId) }] 
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ user: { id: user.id || user._id.toString(), email: user.email, name: user.name, role: user.role } });
+  } catch (error: any) {
+    console.error('Error in me:', error);
+    res.status(401).json({ error: 'Invalid or expired token', details: error.message });
+  }
+});
 
 // Users
 app.get('/api/users/:id', async (req, res) => {

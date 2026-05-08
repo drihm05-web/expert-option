@@ -8,7 +8,7 @@ import { Globe, LogIn, LogOut, LayoutDashboard, Settings, Menu, X, MessageCircle
 import { Toaster } from 'sonner';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { user, role, login, logout } = useAuth();
+  const { user, role, login, register, logout } = useAuth();
   const { siteData } = useSiteData();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +18,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [authSuccess, setAuthSuccess] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -92,11 +94,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
-    setAuthSuccess('');
 
     try {
-      await login();
+      if (authMode === 'login') {
+        await login(email, password);
+      } else {
+        await register(email, password, name);
+      }
       setIsAuthOpen(false);
+      setEmail('');
+      setPassword('');
+      setName('');
     } catch (error: any) {
       setAuthError(error.message || 'Authentication failed');
     } finally {
@@ -334,16 +342,67 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="grid gap-6">
+          <form onSubmit={handleEmailAuth} className="grid gap-6">
             <div className="space-y-4">
+              {authMode === 'signup' && (
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wider text-white/50">Full Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="w-full bg-[#111] border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                    placeholder="Enter your name"
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-wider text-white/50">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-[#111] border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                  placeholder="name@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-wider text-white/50">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full bg-[#111] border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                  placeholder="Enter your password"
+                />
+              </div>
+
+              {authError && (
+                <div className="text-red-500 text-sm mt-2">{authError}</div>
+              )}
+
               <Button 
-                onClick={handleEmailAuth}
+                type="submit"
                 disabled={authLoading}
                 className="w-full bg-[#D4AF37] text-black hover:bg-[#F3C93F] font-bold uppercase tracking-wider h-12 mt-2 transition-colors"
               >
-                {authLoading ? 'Please wait...' : 'Sign in with Google'}
+                {authLoading ? 'Please wait...' : (authMode === 'login' ? 'Sign In' : 'Sign Up')}
               </Button>
             </div>
+          </form>
+
+          <div className="text-center mt-4 border-t border-white/10 pt-4">
+            <button
+              onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+              className="text-sm text-white/50 hover:text-[#D4AF37] transition-colors"
+            >
+              {authMode === 'login' 
+                ? "Don't have an account? Sign up" 
+                : "Already have an account? Sign in"}
+            </button>
           </div>
         </DialogContent>
       </Dialog>

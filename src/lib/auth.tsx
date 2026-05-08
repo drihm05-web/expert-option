@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from './firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { toast } from 'sonner';
 
 interface User {
@@ -14,7 +12,8 @@ interface AuthContextType {
   user: User | null;
   role: 'client' | 'admin' | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -23,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   role: null, 
   loading: true,
   login: async () => {},
+  register: async () => {},
   logout: async () => {}
 });
 
@@ -31,68 +31,89 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<'client' | 'admin' | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          // Always call POST to upsert user and ensure roles are correctly assigned
-          const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              name: firebaseUser.displayName || '',
-              role: 'client',
-              createdAt: new Date().toISOString()
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error('Database connection failed');
-          }
-          
-          const userData: User = await response.json();
-          setUser(userData);
-          setRole(userData.role);
-        } catch (error: any) {
-          console.error("Error fetching user data:", error);
-          toast.error(`Database Error: ${error.message || 'Could not load user profile. Check MONGODB_URI.'}`);
-          setUser(null);
-          setRole(null);
-        }
+  const fetchUser = async (token: string) => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setRole(data.user.role);
       } else {
+        localStorage.removeItem('token');
         setUser(null);
         setRole(null);
       }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setUser(null);
+      setRole(null);
+    } finally {
       setLoading(false);
-    });
+    }
+  };
 
-    return () => unsubscribe();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
+  const login = async (email: string, password: string) => {
     try {
-      await signInWithPopup(auth, provider);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to sign in');
+      
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      setRole(data.user.role);
+      toast.success('Successfully signed in');
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(`Login Error: ${error.message || 'Failed to sign in'}`);
+      toast.error(`Login Error: ${error.message}`);
+      throw error;
+    }
+  };
+
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to register');
+      
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      setRole(data.user.role);
+      toast.success('Successfully registered');
+    } catch (error: any) {
+      console.error("Register error:", error);
+      toast.error(`Registration Error: ${error.message}`);
       throw error;
     }
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error: any) {
-      console.error("Logout error:", error);
-      toast.error(`Logout Error: ${error.message || 'Failed to sign out'}`);
-    }
+    localStorage.removeItem('token');
+    setUser(null);
+    setRole(null);
+    toast.success('Signed out');
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, role, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
