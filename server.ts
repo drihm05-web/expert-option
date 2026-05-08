@@ -48,6 +48,11 @@ async function connectDB() {
 
 // --- API ROUTES ---
 
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', environment: process.env.NODE_ENV });
+});
+
 // Auth
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -102,9 +107,10 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = jwt.sign({ userId: user.id || user._id.toString(), role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const userId = user.id || user._id.toString();
+    const token = jwt.sign({ userId, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.json({ token, user: { id: user.id || user._id.toString(), email: user.email, name: user.name, role: user.role } });
+    res.json({ token, user: { id: userId, email: user.email, name: user.name, role: user.role } });
   } catch (error: any) {
     console.error('Error in login:', error);
     res.status(500).json({ error: 'Failed to login', details: error.message });
@@ -122,9 +128,14 @@ app.get('/api/auth/me', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
 
     const db = await connectDB();
-    const user = await db.collection('users').findOne({ 
-      $or: [{ id: decoded.userId }, { _id: new ObjectId(decoded.userId) }] 
-    });
+    
+    // Safely construct query to avoid ObjectId errors
+    const query: any = { $or: [{ id: decoded.userId }] };
+    if (/^[0-9a-fA-F]{24}$/.test(decoded.userId)) {
+      query.$or.push({ _id: new ObjectId(decoded.userId) });
+    }
+
+    const user = await db.collection('users').findOne(query);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -396,7 +407,7 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // --- VITE MIDDLEWARE ---
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== "production") {
   import("vite").then(async (vite) => {
     const viteServer = await vite.createServer({
       server: { middlewareMode: true },
@@ -404,7 +415,7 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     });
     app.use(viteServer.middlewares);
   });
-} else if (!process.env.VERCEL) {
+} else {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, 'dist');
@@ -414,10 +425,8 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   });
 }
 
-if (!process.env.VERCEL) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
-}
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+});
 
 export default app;
