@@ -67,7 +67,13 @@ app.post('/api/auth/register', async (req, res) => {
     const isAdmin = email === 'drihm05@gmail.com' || email === 'dominic@exertionexports.com';
     const role = isAdmin ? 'admin' : 'client';
     
+    // Generate an id to satisfy potential MongoDB schema validations for `id` field
+    // MongoDB Schema may restrict id to 28 characters alphanumeric (Firebase UID format)
+    const { randomBytes } = await import('crypto');
+    const userId = randomBytes(21).toString('base64url').padEnd(28, '0').slice(0, 28).replace(/[^a-zA-Z0-9]/g, 'x');
+
     const newUser = {
+      id: userId,
       email,
       name,
       password: hashedPassword,
@@ -75,14 +81,7 @@ app.post('/api/auth/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
     
-    const result = await db.collection('users').insertOne(newUser);
-    const userId = result.insertedId.toString();
-
-    // Set id as string representation of _id for consistency
-    await db.collection('users').updateOne(
-      { _id: result.insertedId },
-      { $set: { id: userId } }
-    );
+    await db.collection('users').insertOne(newUser);
 
     const token = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
     
