@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to sign in');
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed to sign in');
       
       localStorage.setItem('token', data.token);
       setUser(data.user);
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({ email, password, name })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to register');
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed to register');
       
       localStorage.setItem('token', data.token);
       setUser(data.user);
